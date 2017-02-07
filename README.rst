@@ -1,3 +1,3 @@
 ==========
- nti.contenttools_iftsa
+nti.app.products.courseware_content
 ==========
