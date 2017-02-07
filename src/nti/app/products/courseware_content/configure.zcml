@@ -8,6 +8,6 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 		
-	<include package="nti.contenttools" />
+	<include package="nti.contentlibrary" />
 
 </configure>
