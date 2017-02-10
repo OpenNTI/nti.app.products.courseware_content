@@ -82,7 +82,13 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( new_package_ntiids, has_length(2))
         assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid, new_package_ntiid))
 
+        self.testapp.post( publish_href )
+        new_package_ntiids = _get_package_ntiids()
+        assert_that( new_package_ntiids, has_length(2))
+        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid, new_package_ntiid))
+
         # TODO: Validate in-server state:
         # -packages for course, index
         # -enrolled access
         # -publishing
+        # -job, post-publish status
