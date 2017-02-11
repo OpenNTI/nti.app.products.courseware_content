@@ -17,6 +17,7 @@ from zope.traversing.interfaces import IPathAdapter
 
 from nti.app.products.courseware_content import VIEW_COURSE_LIBRARY
 
+
 @interface.implementer(IPathAdapter)
 class CourseLibraryPathAdapter(Contained):
 

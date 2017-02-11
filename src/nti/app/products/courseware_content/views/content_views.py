@@ -42,8 +42,6 @@ class CourseLibraryPostView(LibraryPostView):
         bundle = course.ContentPackageBundle
         bundle.updateLastMod()
         # Not sure we can guarantee this is a set...
-        bundle.add( package )
+        bundle.add(package)
         notify(CourseBundleUpdatedEvent(course, (package,)))
         return package
-
-

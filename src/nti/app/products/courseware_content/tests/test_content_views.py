@@ -9,16 +9,12 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_not
 from hamcrest import contains
-from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import has_entries
 from hamcrest import contains_inanyorder
 does_not = is_not
 
 import os
-
-from nti.dataserver.users import User
 
 from nti.app.products.courseware_content import VIEW_COURSE_LIBRARY
 
@@ -30,8 +26,6 @@ from nti.app.publishing import VIEW_UNPUBLISH
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-from nti.dataserver.tests import mock_dataserver
 
 
 class TestContentViews(ApplicationLayerTest):
@@ -57,35 +51,40 @@ class TestContentViews(ApplicationLayerTest):
         course_ntiid = res['CourseNTIID']
         course_href = '/dataserver2/Objects/%s' % course_ntiid
         res = self.testapp.get(course_href).json_body
-        library_href = self.require_link_href_with_rel(res, VIEW_COURSE_LIBRARY)
+        library_href = self.require_link_href_with_rel(res,
+                                                       VIEW_COURSE_LIBRARY)
 
-        def _get_package_ntiids( course_res=None ):
+        def _get_package_ntiids(course_res=None):
             if course_res is None:
-                course_res = self.testapp.get( course_href ).json_body
+                course_res = self.testapp.get(course_href).json_body
             packages = course_res['ContentPackageBundle']['ContentPackages']
             return [x['NTIID'] for x in packages]
-        content_package_ntiids = _get_package_ntiids( res )
-        assert_that( content_package_ntiids, has_length(1) )
-        assert_that( content_package_ntiids, contains(self.package_ntiid) )
+        content_package_ntiids = _get_package_ntiids(res)
+        assert_that(content_package_ntiids, has_length(1))
+        assert_that(content_package_ntiids, contains(self.package_ntiid))
 
         new_title = 'new_title'
         data = {'title': new_title,
-				'Class': 'RenderableContentPackage',
-				'MimeType': u'application/vnd.nextthought.renderablecontentpackage',
-				'content': new_content}
-        res = self.testapp.post_json( library_href, data )
+                'Class': 'RenderableContentPackage',
+                'MimeType': u'application/vnd.nextthought.renderablecontentpackage',
+                'content': new_content}
+        res = self.testapp.post_json(library_href, data)
         res = res.json_body
         new_package_ntiid = res['NTIID']
         publish_href = self.require_link_href_with_rel(res, VIEW_PUBLISH)
         self.forbid_link_with_rel(res, VIEW_UNPUBLISH)
         new_package_ntiids = _get_package_ntiids()
-        assert_that( new_package_ntiids, has_length(2))
-        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid, new_package_ntiid))
+        assert_that(new_package_ntiids, has_length(2))
+        assert_that(new_package_ntiids,
+                    contains_inanyorder(self.package_ntiid,
+                                        new_package_ntiid))
 
-        self.testapp.post( publish_href )
+        self.testapp.post(publish_href)
         new_package_ntiids = _get_package_ntiids()
-        assert_that( new_package_ntiids, has_length(2))
-        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid, new_package_ntiid))
+        assert_that(new_package_ntiids, has_length(2))
+        assert_that(new_package_ntiids,
+                    contains_inanyorder(self.package_ntiid,
+                                        new_package_ntiid))
 
         # TODO: Validate in-server state:
         # -packages for course, index

@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import zope.i18nmessageid
-MessageFactory = zope.i18nmessageid.MessageFactory('nti.app.products.courseware_content')
+MessageFactory = zope.i18nmessageid.MessageFactory(__name__)
 
-VIEW_COURSE_LIBRARY = 'Library'
+from nti.app.contentlibrary import LIBRARY_ADAPTER
+
+VIEW_COURSE_LIBRARY = LIBRARY_ADAPTER
