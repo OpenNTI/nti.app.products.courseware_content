@@ -22,13 +22,20 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import has_permission
 
+from nti.contentlibrary.interfaces import IContentRendered
+
 from nti.contenttypes.courses.legacy_catalog import ILegacyCourseInstance
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseContentPackageBundle
 
+from nti.coremetadata.interfaces import IPublishable
+
+from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
@@ -57,3 +64,36 @@ class _CourseLibraryLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         link.__name__ = ''
         link.__parent__ = context
         _links.append(link)
+
+
+@component.adapter(ICourseContentPackageBundle)
+@interface.implementer(IExternalObjectDecorator)
+class _CourseContentPackageBundleDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    """
+    Suppress packcages w/o acesss
+    """
+
+    def _predicate(self, context, result):
+        return  self._is_authenticated \
+            and not ILegacyCourseInstance.providedBy(context) \
+            and has_permission(ACT_READ, context, self.request)
+
+    def  _is_published(self, unit):
+        return not IPublishable.providedBy(unit) or unit.is_published()
+
+    def _check_publication_view(self, context):
+        if self._is_published(context):
+            return True
+        elif    IContentRendered.providedBy(context) \
+            and has_permission(ACT_CONTENT_EDIT, context, self.request):
+            return True
+        return False
+
+    def _do_decorate_external(self, context, result):
+        keeper = list()
+        ext_obj = result.get('ContentPackages') or ()
+        for idx, package in enumerate(context.ContentPackages or ()):
+            if self._check_publication_view(package):
+                keeper.append(ext_obj[idx])
+        if len(keeper) < len(ext_obj):
+            result['ContentPackages'] = keeper
