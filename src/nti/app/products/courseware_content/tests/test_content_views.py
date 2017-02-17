@@ -66,6 +66,7 @@ class TestContentViews(ApplicationLayerTest):
                 course_res = self.testapp.get( course_href ).json_body
             packages = course_res['ContentPackageBundle']['ContentPackages']
             return [x['NTIID'] for x in packages]
+        # Base case has only has one package
         content_package_ntiids = _get_package_ntiids( res )
         assert_that( content_package_ntiids, has_length(1) )
         assert_that( content_package_ntiids, contains(self.package_ntiid) )

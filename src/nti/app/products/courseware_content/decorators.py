@@ -22,8 +22,6 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import has_permission
 
-from nti.contentlibrary.interfaces import IContentRendered
-
 from nti.contenttypes.courses.legacy_catalog import ILegacyCourseInstance
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -82,12 +80,8 @@ class _CourseContentPackageBundleDecorator(AbstractAuthenticatedRequestAwareDeco
         return not IPublishable.providedBy(unit) or unit.is_published()
 
     def _check_publication_view(self, context):
-        if self._is_published(context):
-            return True
-        elif    IContentRendered.providedBy(context) \
-            and has_permission(ACT_CONTENT_EDIT, context, self.request):
-            return True
-        return False
+        return      self._is_published(context) \
+                or  has_permission(ACT_CONTENT_EDIT, context, self.request)
 
     def _do_decorate_external(self, context, result):
         keeper = list()
