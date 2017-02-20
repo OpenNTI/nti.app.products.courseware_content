@@ -23,4 +23,7 @@
 				for="nti.contenttypes.courses.interfaces.ICourseContentPackageBundle
 					 pyramid.interfaces.IRequest" />
 
+	<!-- Directives / Roles -->
+	<include package=".docutils" />
+	
 </configure>
