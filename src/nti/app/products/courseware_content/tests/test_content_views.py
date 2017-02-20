@@ -7,12 +7,11 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import contains
-from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import has_entries
 from hamcrest import contains_inanyorder
 does_not = is_not
 
@@ -21,6 +20,7 @@ import os
 from nti.dataserver.users import User
 
 from nti.app.contentlibrary import VIEW_CONTENTS
+from nti.app.contentlibrary import VIEW_PUBLISH_CONTENTS
 
 from nti.app.products.courseware_content import VIEW_COURSE_LIBRARY
 
@@ -53,7 +53,7 @@ class TestContentViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def test_post_content(self):
-        new_content = self._get_rst_data('basic.rst')
+        publish_contents = self._get_rst_data('basic.rst')
         entry_href = '/dataserver2/Objects/%s' % self.entry_ntiid
         res = self.testapp.get(entry_href).json_body
         course_ntiid = res['CourseNTIID']
@@ -73,23 +73,56 @@ class TestContentViews(ApplicationLayerTest):
 
         new_title = 'new_title'
         data = {'title': new_title,
-				'Class': 'RenderableContentPackage',
-				'MimeType': u'application/vnd.nextthought.renderablecontentpackage',
-				'content': new_content}
+                'Class': 'RenderableContentPackage',
+                'MimeType': u'application/vnd.nextthought.renderablecontentpackage'}
         res = self.testapp.post_json( library_href, data )
         res = res.json_body
         new_package_ntiid = res['NTIID']
         publish_href = self.require_link_href_with_rel(res, VIEW_PUBLISH)
         contents_href = self.require_link_href_with_rel(res, VIEW_CONTENTS)
+        self.forbid_link_with_rel(res, VIEW_PUBLISH_CONTENTS)
         self.forbid_link_with_rel(res, VIEW_UNPUBLISH)
+
+        self.testapp.put(contents_href,
+                         upload_files=[
+                            ('contents', 'contents.rst', bytes(publish_contents))])
+
         new_package_ntiids = _get_package_ntiids()
         assert_that( new_package_ntiids, has_length(2))
-        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid, new_package_ntiid))
+        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
+                                                             new_package_ntiid))
 
         published_package = self.testapp.post( publish_href )
         new_package_ntiids = _get_package_ntiids()
         assert_that( new_package_ntiids, has_length(2))
-        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid, new_package_ntiid))
+        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
+                                                             new_package_ntiid))
+
+        get_contents = self.testapp.get( contents_href )
+        get_contents = get_contents.json_body
+        assert_that( get_contents['data'], is_(publish_contents))
+
+        # Now update contents (unpublished).
+        new_contents = "%s\nmore text" % publish_contents
+        res = self.testapp.put(contents_href,
+                               upload_files=[
+                                    ('contents', 'contents.rst', bytes(new_contents))])
+        res = res.json_body
+
+        # Now we have publish_contents href
+        publish_contents_href = self.require_link_href_with_rel(res,
+                                                                VIEW_PUBLISH_CONTENTS)
+
+        publish_contents_res = self.testapp.get( publish_contents_href )
+        publish_contents_res = publish_contents_res.json_body
+        assert_that( publish_contents_res['data'], is_(publish_contents))
+        get_contents = self.testapp.get( contents_href )
+        get_contents = get_contents.json_body
+        assert_that( get_contents['data'], is_(new_contents))
+
+        # Now publish and the publish_contents rel is no longer necessary
+        published_package = self.testapp.post( publish_href )
+        self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
 
         # TODO: Validate in-server state:
         # -packages for course, index
