@@ -22,8 +22,20 @@ class CourseAssetToPlastexNodeTranslator(TranslatorMixin):
     __name__ = "course-asset"
 
     def translate(self, rst_node, tex_doc, tex_parent):
-#         result = tex_doc.createElement(rst_node.tagname)
-#         title_text = tex_doc.createTextNode(rst_node.astext())
-#         result.append(title_text)
-#         return result
-        pass
+        result = tex_doc.createElement('figure')
+        # process include graphics
+        options = dict()  # graphics settings
+        grphx = tex_doc.createElement('ntiincludeannotationgraphics')
+        grphx.setAttribute('file', rst_node['uri'])
+        grphx.setAttribute('options', options)
+        for name in ('height', 'width'):
+            value = rst_node.options[name]
+            if value:
+                try:
+                    float(value)  # unitless
+                    options[name] = '%spx' % (value)
+                except (ValueError):
+                    options[name] = value
+        # add and return
+        result.append(grphx)
+        return result
