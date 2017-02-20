@@ -119,10 +119,21 @@ class TestContentViews(ApplicationLayerTest):
         get_contents = self.testapp.get( contents_href )
         get_contents = get_contents.json_body
         assert_that( get_contents['data'], is_(new_contents))
+        valid_version = publish_contents_res['version']
 
         # Now publish and the publish_contents rel is no longer necessary
         published_package = self.testapp.post( publish_href )
         self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
+
+        # Validate versioning
+        conflict_contents = "%s\nconflict" % publish_contents
+        self.testapp.put('%s?version=%s' % (contents_href, 'invalid_version'),
+                         upload_files=[
+                            ('contents', 'contents.rst', bytes(conflict_contents))],
+                         status=409)
+        self.testapp.put('%s?version=%s' % (contents_href, valid_version),
+                         upload_files=[
+                            ('contents', 'contents.rst', bytes(conflict_contents))])
 
         # TODO: Validate in-server state:
         # -packages for course, index
