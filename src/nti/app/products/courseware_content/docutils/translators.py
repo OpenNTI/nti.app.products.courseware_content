@@ -17,6 +17,7 @@ from nti.contentlibrary_rendering.docutils.interfaces import IRSTToPlastexNodeTr
 
 from nti.contentrendering.plastexpackages.ntilatexmacros import ntiincludeannotationgraphics
 
+
 @interface.implementer(IRSTToPlastexNodeTranslator)
 class CourseAssetToPlastexNodeTranslator(TranslatorMixin):
 
