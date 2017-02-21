@@ -32,7 +32,7 @@ class CourseAssetToPlastexNodeTranslator(TranslatorMixin):
         grphx.setAttribute('options', options)
         value = rst_node.attributes.get('scale', None)
         if value:
-            options['scale'] = value
+            options['scale'] = value if value <= 1 else value / 100.0
         else:
             for name in ('height', 'width'):
                 value = rst_node.attributes.get(name, None)
