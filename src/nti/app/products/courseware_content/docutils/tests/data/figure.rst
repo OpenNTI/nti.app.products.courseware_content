@@ -6,6 +6,6 @@ Test Figure
    :scale: 50 %
    :alt: bankai inchigo
 
-   Awesome bankai (a simple paragraph).
+   Figure bankai
 
-   Bankai second form.
+   Bankai second form
