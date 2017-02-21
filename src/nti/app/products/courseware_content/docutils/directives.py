@@ -44,10 +44,13 @@ def get_course_asset(uri):
 
 def save_to_disk(asset, out_dir=None):
     out_dir = out_dir or os.getcwd()
-    name = os.path.join(COURSE_ASSETS, asset.filename)
-    path = os.path.join(out_dir, name)
+    out_dir = os.path.join(out_dir, COURSE_ASSETS)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    path = os.path.join(out_dir, asset.filename)
     transfer_to_native_file(asset, path)
-    return name
+    result = os.path.join(COURSE_ASSETS, asset.filename)
+    return result
 
 
 class CourseAsset(Figure):
@@ -87,6 +90,7 @@ class CourseAsset(Figure):
 
 def register_directives():
     directives.register_directive("course-asset", CourseAsset)
+register_directives()
 
 from nti.contentlibrary_rendering.docutils.interfaces import IDirectivesModule
 interface.moduleProvides(IDirectivesModule)
