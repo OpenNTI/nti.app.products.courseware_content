@@ -57,6 +57,7 @@ class CourseAsset(Figure):
 
     option_spec = dict(Figure.option_spec)
     option_spec.pop('target', None)
+    option_spec.pop('figclass', None)
 
     def run(self):
         reference = directives.uri(self.arguments[0]) or u''

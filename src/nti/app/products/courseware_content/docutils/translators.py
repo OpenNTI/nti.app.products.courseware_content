@@ -30,15 +30,18 @@ class CourseAssetToPlastexNodeTranslator(TranslatorMixin):
         grphx = ntiincludeannotationgraphics()
         grphx.setAttribute('file', rst_node['uri'])
         grphx.setAttribute('options', options)
-        # TODO: Handle style and scale
-        for name in ('height', 'width'):
-            value = rst_node.attributes.get(name, None)
-            if value:
-                try:
-                    float(value)  # unitless
-                    options[name] = '%spx' % (value)
-                except (ValueError):
-                    options[name] = value
+        value = rst_node.attributes.get('scale', None)
+        if value:
+            options['scale'] = value
+        else:
+            for name in ('height', 'width'):
+                value = rst_node.attributes.get(name, None)
+                if value:
+                    try:
+                        float(value)  # unitless
+                        options[name] = '%spx' % (value)
+                    except (ValueError):
+                        options[name] = value
         # add and return
         result.append(grphx)
         return result
