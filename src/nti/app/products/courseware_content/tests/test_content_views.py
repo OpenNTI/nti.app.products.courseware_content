@@ -45,11 +45,15 @@ from nti.contentlibrary_rendering.interfaces import SUCCESS
 
 from nti.contentlibrary_rendering.interfaces import IContentPackageRenderMetadata
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
 
 from nti.contenttypes.courses.utils import get_content_unit_courses
 
 from nti.dataserver.tests import mock_dataserver
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.site.interfaces import IHostPolicyFolder
 
@@ -67,8 +71,10 @@ class TestContentViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def tearDown(self):
-        # Clean up our site library; this will be distinct
-        # from the syncable site - platform.ou.edu.
+        """
+        Clean up our site library; this will be distinct
+        from the syncable site - platform.ou.edu.
+        """
         with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             folder = find_interface(library, IHostPolicyFolder, strict=False)
@@ -81,6 +87,21 @@ class TestContentViews(ApplicationLayerTest):
         with open(path, 'r') as f:
             result = f.read()
         return result
+
+    def _create_and_enroll(self, username):
+        """
+        Create user and enroll.
+        """
+        with mock_dataserver.mock_db_trans(self.ds):
+            # The janux policy enforces first/last names.
+            self._create_user(username)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='janux.ou.edu'):
+            new_user = User.get_user(username)
+            course = find_object_with_ntiid(self.entry_ntiid)
+            course = ICourseInstance(course)
+            manager = ICourseEnrollmentManager(course)
+            manager.enroll(new_user)
 
     def _check_package_state(self, package_ntiid, job_count=0):
         """
@@ -103,6 +124,12 @@ class TestContentViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def test_post_content(self):
+        """
+        Test creating a new package in a course.
+        """
+        admin_environ = self._make_extra_environ(username="sjohnson@nextthought.com")
+        self._create_and_enroll('student1')
+        student1_environ = self._make_extra_environ(username='student1')
         publish_contents = self._get_rst_data('basic.rst')
         entry_href = '/dataserver2/Objects/%s' % self.entry_ntiid
         res = self.testapp.get(entry_href).json_body
@@ -111,17 +138,19 @@ class TestContentViews(ApplicationLayerTest):
         res = self.testapp.get(course_href).json_body
         library_href = self.require_link_href_with_rel(res, VIEW_COURSE_LIBRARY)
 
-        def _get_package_ntiids( course_res=None ):
+        def _get_package_ntiids( course_res=None, environ=admin_environ ):
             if course_res is None:
-                course_res = self.testapp.get( course_href ).json_body
+                course_res = self.testapp.get( course_href, extra_environ=environ )
+                course_res = course_res.json_body
             packages = course_res['ContentPackageBundle']['ContentPackages']
             return [x['NTIID'] for x in packages]
         # Base case has only has one package
-        content_package_ntiids = _get_package_ntiids( res )
-        assert_that( content_package_ntiids, has_length(1) )
-        assert_that( content_package_ntiids, contains(self.package_ntiid) )
+        for environ in (student1_environ, admin_environ):
+            content_package_ntiids = _get_package_ntiids( environ=environ )
+            assert_that( content_package_ntiids, has_length(1) )
+            assert_that( content_package_ntiids, contains(self.package_ntiid) )
 
-        # Create a new package in our course
+        # Create a new package in our course, without contents.
         new_title = 'new_title'
         data = {'title': new_title,
                 'Class': 'RenderableContentPackage',
@@ -142,10 +171,14 @@ class TestContentViews(ApplicationLayerTest):
                          upload_files=[
                             ('contents', 'contents.rst', bytes(publish_contents))])
 
-        new_package_ntiids = _get_package_ntiids()
-        assert_that( new_package_ntiids, has_length(2))
-        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
-                                                             new_package_ntiid))
+        content_package_ntiids = _get_package_ntiids()
+        assert_that( content_package_ntiids, has_length(2))
+        assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
+                                                                 new_package_ntiid))
+        # Student only sees one package
+        content_package_ntiids = _get_package_ntiids(environ=student1_environ)
+        assert_that( content_package_ntiids, has_length(1))
+        assert_that( content_package_ntiids, contains(self.package_ntiid))
         self._check_package_state(new_package_ntiid)
 
         # Publish the package, which also renders in this case
@@ -155,10 +188,15 @@ class TestContentViews(ApplicationLayerTest):
         job = published_package.get( 'LatestRenderJob' )
         assert_that( job, not_none())
         assert_that( job['State'], is_(SUCCESS))
-        new_package_ntiids = _get_package_ntiids()
-        assert_that( new_package_ntiids, has_length(2))
-        assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
-                                                             new_package_ntiid))
+
+        # Student now sees both packages, as well as newly enrolled student
+        self._create_and_enroll('student2')
+        student2_environ = self._make_extra_environ(username='student2')
+        for environ in (student1_environ, student2_environ, admin_environ):
+            content_package_ntiids = _get_package_ntiids( environ=environ )
+            assert_that( content_package_ntiids, has_length(2))
+            assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
+                                                                     new_package_ntiid))
         self._check_package_state(new_package_ntiid, job_count=1)
 
         # Validate contents
@@ -213,5 +251,6 @@ class TestContentViews(ApplicationLayerTest):
 
         # TODO: Validate in-server state:
         # -enrolled access
+        # -enroll after package access
         # -test contents (page-info)
         # -Failed job
