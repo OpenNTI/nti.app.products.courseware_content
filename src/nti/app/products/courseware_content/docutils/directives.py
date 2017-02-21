@@ -13,7 +13,7 @@ import os
 
 from zope import interface
 
-from docutils import nodes as docutils_nodes
+from docutils import nodes
 
 from docutils.parsers.rst import directives
 
@@ -25,7 +25,7 @@ from nti.app.contentfile.view_mixins import get_file_from_oid_external_link
 from nti.app.contentfolder.utils import is_cf_io_href
 from nti.app.contentfolder.utils import get_file_from_cf_io_url
 
-from nti.app.products.courseware_content.docutils import nodes
+from nti.app.products.courseware_content.docutils.nodes import course_asset
 
 from nti.cabinet.filer import transfer_to_native_file
 
@@ -78,12 +78,24 @@ class CourseAsset(Figure):
                 % (self.name, reference))
 
         (figure_node,) = Figure.run(self)
-        if isinstance(figure_node, docutils_nodes.system_message):
+        if isinstance(figure_node, nodes.system_message):
             return [figure_node]
 
-        course_asset_node = nodes.course_asset('', figure_node)
-        # when this directive runs the we assume the directory to save the resource
-        # has been set
+        # first children is an image
+        fig_children = figure_node.children
+
+        # merge image and figure attributes
+        img_attributes = fig_children[0].attributes
+        node_attributes = dict(img_attributes)
+        node_attributes.update(figure_node.attributes)
+
+        # creates the course asset, don't include the image node
+        course_asset_node = course_asset('', 
+                                         *fig_children[1:],
+                                         **node_attributes)
+
+        # when this directive runs the we assume the directory 
+        # to save the resource has been set
         course_asset_node['uri'] = save_to_disk(asset)
         return [course_asset_node]
 

@@ -11,6 +11,6 @@
 	<module module=".directives" />
 
 	<utility factory=".translators.CourseAssetToPlastexNodeTranslator" 
-			 name="course-asset" />
+			 name="course_asset" />
 
 </configure>
