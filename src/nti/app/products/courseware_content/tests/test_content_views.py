@@ -8,7 +8,9 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import contains
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -32,6 +34,8 @@ from nti.app.publishing import VIEW_UNPUBLISH
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.contentlibrary_rendering.interfaces import SUCCESS
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -78,6 +82,8 @@ class TestContentViews(ApplicationLayerTest):
         res = self.testapp.post_json( library_href, data )
         res = res.json_body
         new_package_ntiid = res['NTIID']
+        assert_that( res['isRendered'], is_(False))
+        assert_that( res.get('LatestRenderJob'), none())
         publish_href = self.require_link_href_with_rel(res, VIEW_PUBLISH)
         contents_href = self.require_link_href_with_rel(res, VIEW_CONTENTS)
         self.forbid_link_with_rel(res, VIEW_PUBLISH_CONTENTS)
@@ -93,6 +99,11 @@ class TestContentViews(ApplicationLayerTest):
                                                              new_package_ntiid))
 
         published_package = self.testapp.post( publish_href )
+        published_package = published_package.json_body
+        assert_that( published_package['isRendered'], is_(True))
+        job = published_package.get( 'LatestRenderJob' )
+        assert_that( job, not_none())
+        assert_that( job['State'], is_(SUCCESS))
         new_package_ntiids = _get_package_ntiids()
         assert_that( new_package_ntiids, has_length(2))
         assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
@@ -124,7 +135,6 @@ class TestContentViews(ApplicationLayerTest):
         # Now publish and the publish_contents rel is no longer necessary
         published_package = self.testapp.post( publish_href )
         self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
-
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
         self.testapp.put('%s?version=%s' % (contents_href, 'invalid_version'),
