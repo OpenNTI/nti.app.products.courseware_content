@@ -42,6 +42,8 @@ class CourseAssetToPlastexNodeTranslator(TranslatorMixin):
                         options[name] = '%spx' % (value)
                     except (ValueError):
                         options[name] = value
-        # add and return
+        # add to set lineage
         result.append(grphx)
+        # process image and return
+        grphx.process_image()
         return result
