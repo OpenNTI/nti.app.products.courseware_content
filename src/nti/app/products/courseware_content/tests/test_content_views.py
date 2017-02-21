@@ -18,6 +18,9 @@ from hamcrest import contains_inanyorder
 does_not = is_not
 
 import os
+import shutil
+
+from zope import component
 
 from nti.dataserver.users import User
 
@@ -35,9 +38,16 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
+
 from nti.contentlibrary_rendering.interfaces import SUCCESS
 
 from nti.dataserver.tests import mock_dataserver
+
+from nti.site.interfaces import IHostPolicyFolder
+
+from nti.traversal.traversal import find_interface
 
 
 class TestContentViews(ApplicationLayerTest):
@@ -48,6 +58,17 @@ class TestContentViews(ApplicationLayerTest):
 
     entry_ntiid = 'tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323'
     package_ntiid = 'tag:nextthought.com,2011-10:OU-HTML-CS1323_F_2015_Intro_to_Computer_Programming.introduction_to_computer_programming'
+
+    @WithSharedApplicationMockDS(testapp=True, users=True)
+    def tearDown(self):
+        # Clean up our site library; this will be distinct
+        # from the syncable site - platform.ou.edu.
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            library = component.getUtility(IContentPackageLibrary)
+            folder = find_interface(library, IHostPolicyFolder, strict=False)
+            assert_that( folder.__name__, is_('janux.ou.edu'))
+            enumeration = IDelimitedHierarchyContentPackageEnumeration(library)
+            shutil.rmtree(enumeration.root.absolute_path)
 
     def _get_rst_data(self, filename='sample.rst'):
         path = os.path.join(os.path.dirname(__file__), filename)
