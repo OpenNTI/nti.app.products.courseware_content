@@ -43,6 +43,12 @@ from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnume
 
 from nti.contentlibrary_rendering.interfaces import SUCCESS
 
+from nti.contentlibrary_rendering.interfaces import IContentPackageRenderMetadata
+
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+
+from nti.contenttypes.courses.utils import get_content_unit_courses
+
 from nti.dataserver.tests import mock_dataserver
 
 from nti.site.interfaces import IHostPolicyFolder
@@ -68,13 +74,32 @@ class TestContentViews(ApplicationLayerTest):
             folder = find_interface(library, IHostPolicyFolder, strict=False)
             assert_that( folder.__name__, is_('janux.ou.edu'))
             enumeration = IDelimitedHierarchyContentPackageEnumeration(library)
-            shutil.rmtree(enumeration.root.absolute_path)
+            shutil.rmtree(enumeration.root.absolute_path, ignore_errors=True)
 
     def _get_rst_data(self, filename='sample.rst'):
         path = os.path.join(os.path.dirname(__file__), filename)
         with open(path, 'r') as f:
             result = f.read()
         return result
+
+    def _check_package_state(self, package_ntiid, job_count=0):
+        """
+        Validate the course is found with just the package. Validate
+        the library has the package details and that the job status
+        is correct.
+        """
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            library = component.getUtility(IContentPackageLibrary)
+            package = library.contentUnitsByNTIID.get( package_ntiid )
+            assert_that( package, not_none() )
+            assert_that( package.ntiid, is_(package_ntiid))
+            courses = get_content_unit_courses(package)
+            assert_that( courses, has_length(1))
+            entry_ntiid = ICourseCatalogEntry(courses[0]).ntiid
+            assert_that( entry_ntiid, is_(self.entry_ntiid))
+            meta = IContentPackageRenderMetadata(package, None)
+            assert_that(meta, not_none())
+            assert_that(tuple(meta.values()), has_length(job_count))
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def test_post_content(self):
@@ -110,6 +135,7 @@ class TestContentViews(ApplicationLayerTest):
         contents_href = self.require_link_href_with_rel(res, VIEW_CONTENTS)
         self.forbid_link_with_rel(res, VIEW_PUBLISH_CONTENTS)
         self.forbid_link_with_rel(res, VIEW_UNPUBLISH)
+        self._check_package_state(new_package_ntiid)
 
         # Now set the contents
         self.testapp.put(contents_href,
@@ -120,6 +146,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( new_package_ntiids, has_length(2))
         assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                              new_package_ntiid))
+        self._check_package_state(new_package_ntiid)
 
         # Publish the package, which also renders in this case
         published_package = self.testapp.post( publish_href )
@@ -132,6 +159,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( new_package_ntiids, has_length(2))
         assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                              new_package_ntiid))
+        self._check_package_state(new_package_ntiid, job_count=1)
 
         # Validate contents
         get_contents = self.testapp.get( contents_href )
@@ -184,7 +212,6 @@ class TestContentViews(ApplicationLayerTest):
                          status=422)
 
         # TODO: Validate in-server state:
-        # -packages for course, index
         # -enrolled access
         # -test contents (page-info)
-        # -RST validation, failed job
+        # -Failed job
