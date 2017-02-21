@@ -75,6 +75,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( content_package_ntiids, has_length(1) )
         assert_that( content_package_ntiids, contains(self.package_ntiid) )
 
+        # Create a new package in our course
         new_title = 'new_title'
         data = {'title': new_title,
                 'Class': 'RenderableContentPackage',
@@ -89,6 +90,7 @@ class TestContentViews(ApplicationLayerTest):
         self.forbid_link_with_rel(res, VIEW_PUBLISH_CONTENTS)
         self.forbid_link_with_rel(res, VIEW_UNPUBLISH)
 
+        # Now set the contents
         self.testapp.put(contents_href,
                          upload_files=[
                             ('contents', 'contents.rst', bytes(publish_contents))])
@@ -98,6 +100,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                              new_package_ntiid))
 
+        # Publish the package, which also renders in this case
         published_package = self.testapp.post( publish_href )
         published_package = published_package.json_body
         assert_that( published_package['isRendered'], is_(True))
@@ -109,6 +112,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( new_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                              new_package_ntiid))
 
+        # Validate contents
         get_contents = self.testapp.get( contents_href )
         get_contents = get_contents.json_body
         assert_that( get_contents['data'], is_(publish_contents))
@@ -124,6 +128,7 @@ class TestContentViews(ApplicationLayerTest):
         publish_contents_href = self.require_link_href_with_rel(res,
                                                                 VIEW_PUBLISH_CONTENTS)
 
+        # Validate our published contents
         publish_contents_res = self.testapp.get( publish_contents_href )
         publish_contents_res = publish_contents_res.json_body
         assert_that( publish_contents_res['data'], is_(publish_contents))
@@ -132,22 +137,33 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( get_contents['data'], is_(new_contents))
         valid_version = publish_contents_res['version']
 
-        # Now publish and the publish_contents rel is no longer necessary
+        # Now re-publish and the publish_contents rel is no longer necessary
         published_package = self.testapp.post( publish_href )
         self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
+
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
         self.testapp.put('%s?version=%s' % (contents_href, 'invalid_version'),
                          upload_files=[
                             ('contents', 'contents.rst', bytes(conflict_contents))],
                          status=409)
+        res = self.testapp.put('%s?version=%s' % (contents_href, valid_version),
+                               upload_files=[
+                                    ('contents', 'contents.rst', bytes(conflict_contents))])
+        res = res.json_body
+        valid_version = res['version']
+
+        # Test validation 422
+        invalid_contents = b"""Chapter 1 Title
+                                   ========
+                            """
         self.testapp.put('%s?version=%s' % (contents_href, valid_version),
                          upload_files=[
-                            ('contents', 'contents.rst', bytes(conflict_contents))])
+                            ('contents', 'contents.rst', bytes(invalid_contents))],
+                         status=422)
 
         # TODO: Validate in-server state:
         # -packages for course, index
         # -enrolled access
-        # -publishing
-        # -job, post-publish status
-        # -test contents
+        # -test contents (page-info)
+        # -RST validation, failed job
