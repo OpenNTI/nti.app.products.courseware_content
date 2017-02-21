@@ -30,6 +30,9 @@ class CourseAssetToPlastexNodeTranslator(TranslatorMixin):
         grphx = ntiincludeannotationgraphics()
         grphx.setAttribute('file', rst_node['uri'])
         grphx.setAttribute('options', options)
+        value = rst_node.attributes.get('alt', None)
+        if value: # alttext
+            grphx.setAttribute('alttext', value)
         value = rst_node.attributes.get('scale', None)
         if value:
             options['scale'] = value if value <= 1 else value / 100.0
