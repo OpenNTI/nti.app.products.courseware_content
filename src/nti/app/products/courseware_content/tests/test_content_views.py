@@ -27,6 +27,8 @@ from nti.dataserver.users import User
 from nti.app.contentlibrary import VIEW_CONTENTS
 from nti.app.contentlibrary import VIEW_PUBLISH_CONTENTS
 
+from nti.app.contentlibrary.utils import PAGE_INFO_MT
+
 from nti.app.products.courseware_content import VIEW_COURSE_LIBRARY
 
 from nti.app.products.courseware.tests import PersistentInstructedCourseApplicationTestLayer
@@ -53,11 +55,16 @@ from nti.contenttypes.courses.utils import get_content_unit_courses
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.externalization.externalization import StandardExternalFields
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
+
+CLASS = StandardExternalFields.CLASS
+MIMETYPE = StandardExternalFields.MIMETYPE
 
 
 class TestContentViews(ApplicationLayerTest):
@@ -105,6 +112,19 @@ class TestContentViews(ApplicationLayerTest):
             manager = ICourseEnrollmentManager(course)
             manager.enroll(new_user)
 
+    def _get_page_info(self, package_ntiid, environ, status=200):
+        accept_type = str('application/json')
+        res = self.testapp.get( '/dataserver2/Objects/%s' % package_ntiid,
+                           headers={str("Accept"): accept_type},
+                           extra_environ=environ,
+                           status=status )
+        res = res.json_body
+        if status == 200:
+            assert_that( res['ContentPackageNTIID'], is_(package_ntiid))
+            assert_that( res[CLASS], is_('PageInfo'))
+            assert_that( res[MIMETYPE], is_(PAGE_INFO_MT))
+        return res
+
     def _check_package_state(self, package_ntiid, job_count=0):
         """
         Validate the course is found with just the package. Validate
@@ -130,8 +150,7 @@ class TestContentViews(ApplicationLayerTest):
         Test creating a new package in a course.
         """
         admin_environ = self._make_extra_environ(username="sjohnson@nextthought.com")
-        self.create_user('janux_courses')
-        instructor_environ = self._make_extra_environ(username="janux_courses")
+        instructor_environ = self._make_extra_environ(username="cs1323_instructor")
         self._create_and_enroll('student1')
         student1_environ = self._make_extra_environ(username='student1')
         publish_contents = self._get_rst_data('basic.rst')
@@ -185,6 +204,10 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( content_package_ntiids, has_length(1))
             assert_that( content_package_ntiids, contains(self.package_ntiid))
         self._check_package_state(new_package_ntiid)
+        # Check page info (403s until rendered).
+        self._get_page_info(new_package_ntiid, admin_environ, status=403)
+        self._get_page_info(new_package_ntiid, student1_environ, status=403)
+        self._get_page_info(new_package_ntiid, instructor_environ, status=403)
 
         # Publish the package, which also renders in this case
         published_package = self.testapp.post( publish_href )
@@ -202,6 +225,10 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( content_package_ntiids, has_length(2))
             assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                                      new_package_ntiid))
+        self._get_page_info(new_package_ntiid, admin_environ)
+        self._get_page_info(new_package_ntiid, student1_environ)
+        self._get_page_info(new_package_ntiid, student2_environ)
+        self._get_page_info(new_package_ntiid, instructor_environ)
         self._check_package_state(new_package_ntiid, job_count=1)
 
         # Validate contents
@@ -255,7 +282,5 @@ class TestContentViews(ApplicationLayerTest):
                          status=422)
 
         # TODO: Validate in-server state:
-        # -enrolled access
-        # -enroll after package access
-        # -test contents (page-info)
+        # -Unpublished
         # -Failed job
