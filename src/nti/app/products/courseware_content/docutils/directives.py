@@ -17,8 +17,8 @@ from docutils.parsers.rst import directives
 
 from docutils.parsers.rst.directives.images import Figure
 
-from nti.app.contentlibrary_rendering.docutils.utils import is_datasever_asset
-from nti.app.contentlibrary_rendering.docutils.utils import get_datasever_asset
+from nti.app.contentlibrary_rendering.docutils.utils import is_dataserver_asset
+from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
 from nti.app.contentlibrary_rendering.docutils.utils import save_to_course_assets
 
 from nti.app.products.courseware_content.docutils.nodes import course_asset
@@ -32,7 +32,7 @@ class CourseAsset(Figure):
 
     def run(self):
         reference = directives.uri(self.arguments[0]) or u''
-        if not reference or not is_datasever_asset(reference):
+        if not reference or not is_dataserver_asset(reference):
             raise self.error(
                 'Error in "%s" directive: "%s" is not a valid href value for '
                 'a course asset.' % (self.name, reference))
@@ -43,7 +43,7 @@ class CourseAsset(Figure):
                 'Error in "%s" directive: image is not a valid value for '
                 'the "figwidth" option.' % self.name)
 
-        asset = get_datasever_asset(reference)
+        asset = get_dataserver_asset(reference)
         if asset is None:
             raise self.error(
                 'Error in "%s" directive: course asset "%" is missing'
