@@ -76,12 +76,12 @@ class _CourseContentPackageBundleDecorator(AbstractAuthenticatedRequestAwareDeco
             and not ILegacyCourseInstance.providedBy(context) \
             and has_permission(ACT_READ, context, self.request)
 
-    def  _is_published(self, unit):
+    def _is_published(self, unit):
         return not IPublishable.providedBy(unit) or unit.is_published()
 
     def _check_publication_view(self, context):
-        return      self._is_published(context) \
-                or  has_permission(ACT_CONTENT_EDIT, context, self.request)
+        return self._is_published(context) \
+            or has_permission(ACT_CONTENT_EDIT, context, self.request)
 
     def _do_decorate_external(self, context, result):
         keeper = list()
