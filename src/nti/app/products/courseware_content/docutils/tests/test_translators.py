@@ -59,8 +59,8 @@ class TestTranslators(ApplicationLayerTest):
             os.chdir(current_dir)
         return document
 
-    @fudge.patch('nti.app.products.courseware_content.docutils.directives.is_course_asset',
-                 'nti.app.products.courseware_content.docutils.directives.get_course_asset' )
+    @fudge.patch('nti.app.contentlibrary_rendering.docutils.utils.is_dataserver_asset',
+                 'nti.app.contentlibrary_rendering.docutils.utils.get_dataserver_asset' )
     def test_figure(self, mock_isca, mock_gca):
         mock_isca.is_callable().with_args().returns(True)
         mock_gca.is_callable().with_args().returns(self._ichigo_asset())
