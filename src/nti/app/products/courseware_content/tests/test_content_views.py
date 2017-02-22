@@ -225,6 +225,7 @@ class TestContentViews(ApplicationLayerTest):
         job = published_package.get( 'LatestRenderJob' )
         assert_that( job, not_none())
         assert_that( job['State'], is_(SUCCESS))
+        unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
 
         # Student now sees both packages, as well as newly enrolled student
         self._create_and_enroll('student2')
@@ -270,6 +271,7 @@ class TestContentViews(ApplicationLayerTest):
         # Now re-publish and the publish_contents rel is no longer necessary
         published_package = self.testapp.post( publish_href )
         self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
+        self._check_package_state(new_package_ntiid, job_count=2)
 
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
@@ -292,7 +294,30 @@ class TestContentViews(ApplicationLayerTest):
                             ('contents', 'contents.rst', bytes(invalid_contents))],
                          status=422)
 
-        # TODO: Validate in-server state:
-        # -Unpublished
+        # Unpublish our contents and access goes away
+        res = self.testapp.post( unpublish_href, status=409 )
+        res = res.json_body
+        unpublish_href = self.require_link_href_with_rel(res, 'confirm')
+        self.testapp.post( unpublish_href )
+
+        content_package_ntiids = _get_package_ntiids()
+        assert_that( content_package_ntiids, has_length(2))
+        assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
+                                                                 new_package_ntiid))
+
+        for environ in (student1_environ, instructor_environ,
+                        student2_environ, student3_section_environ):
+            content_package_ntiids = _get_package_ntiids(environ=environ)
+            assert_that( content_package_ntiids, has_length(1))
+            assert_that( content_package_ntiids, contains(self.package_ntiid))
+        self._check_package_state(new_package_ntiid, job_count=2)
+        # Admin still has access since content is rendered
+        self._get_page_info(new_package_ntiid, admin_environ)
+        self._get_page_info(new_package_ntiid, student1_environ, status=403)
+        self._get_page_info(new_package_ntiid, student2_environ, status=403)
+        self._get_page_info(new_package_ntiid, instructor_environ, status=403)
+        self._get_page_info(new_package_ntiid, student3_section_environ, status=403)
+
+        # TODOe:
         # -Failed job
-        # -Section ACL/access
+        # -Delete
