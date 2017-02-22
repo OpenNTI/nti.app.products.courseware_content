@@ -88,14 +88,16 @@ class TestContentViews(ApplicationLayerTest):
             result = f.read()
         return result
 
-    def _create_and_enroll(self, username):
-        """
-        Create user and enroll.
-        """
+    def create_user(self, username):
         with mock_dataserver.mock_db_trans(self.ds):
             # The janux policy enforces first/last names.
             self._create_user(username)
 
+    def _create_and_enroll(self, username):
+        """
+        Create user and enroll.
+        """
+        self.create_user(username)
         with mock_dataserver.mock_db_trans(self.ds, site_name='janux.ou.edu'):
             new_user = User.get_user(username)
             course = find_object_with_ntiid(self.entry_ntiid)
@@ -128,6 +130,8 @@ class TestContentViews(ApplicationLayerTest):
         Test creating a new package in a course.
         """
         admin_environ = self._make_extra_environ(username="sjohnson@nextthought.com")
+        self.create_user('janux_courses')
+        instructor_environ = self._make_extra_environ(username="janux_courses")
         self._create_and_enroll('student1')
         student1_environ = self._make_extra_environ(username='student1')
         publish_contents = self._get_rst_data('basic.rst')
@@ -145,7 +149,7 @@ class TestContentViews(ApplicationLayerTest):
             packages = course_res['ContentPackageBundle']['ContentPackages']
             return [x['NTIID'] for x in packages]
         # Base case has only has one package
-        for environ in (student1_environ, admin_environ):
+        for environ in (student1_environ, admin_environ, instructor_environ):
             content_package_ntiids = _get_package_ntiids( environ=environ )
             assert_that( content_package_ntiids, has_length(1) )
             assert_that( content_package_ntiids, contains(self.package_ntiid) )
@@ -176,9 +180,10 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                                  new_package_ntiid))
         # Student only sees one package
-        content_package_ntiids = _get_package_ntiids(environ=student1_environ)
-        assert_that( content_package_ntiids, has_length(1))
-        assert_that( content_package_ntiids, contains(self.package_ntiid))
+        for environ in (student1_environ, instructor_environ):
+            content_package_ntiids = _get_package_ntiids(environ=environ)
+            assert_that( content_package_ntiids, has_length(1))
+            assert_that( content_package_ntiids, contains(self.package_ntiid))
         self._check_package_state(new_package_ntiid)
 
         # Publish the package, which also renders in this case
@@ -192,7 +197,7 @@ class TestContentViews(ApplicationLayerTest):
         # Student now sees both packages, as well as newly enrolled student
         self._create_and_enroll('student2')
         student2_environ = self._make_extra_environ(username='student2')
-        for environ in (student1_environ, student2_environ, admin_environ):
+        for environ in (student1_environ, student2_environ, admin_environ, instructor_environ):
             content_package_ntiids = _get_package_ntiids( environ=environ )
             assert_that( content_package_ntiids, has_length(2))
             assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
