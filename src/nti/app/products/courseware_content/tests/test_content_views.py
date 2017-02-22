@@ -12,6 +12,8 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import not_none
 from hamcrest import contains
+from hamcrest import has_item
+from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import contains_inanyorder
@@ -64,6 +66,7 @@ from nti.site.interfaces import IHostPolicyFolder
 from nti.traversal.traversal import find_interface
 
 CLASS = StandardExternalFields.CLASS
+LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 
 
@@ -123,6 +126,7 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( res['ContentPackageNTIID'], is_(package_ntiid))
             assert_that( res[CLASS], is_('PageInfo'))
             assert_that( res[MIMETYPE], is_(PAGE_INFO_MT))
+            assert_that( res[LINKS], has_item( has_entry('rel', 'content')))
         return res
 
     def _check_package_state(self, package_ntiid, job_count=0):
@@ -284,3 +288,4 @@ class TestContentViews(ApplicationLayerTest):
         # TODO: Validate in-server state:
         # -Unpublished
         # -Failed job
+        # -Section ACL/access
