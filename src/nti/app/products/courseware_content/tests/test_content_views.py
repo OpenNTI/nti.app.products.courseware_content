@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.app.contentlibrary_rendering import VIEW_QUERY_JOB
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -221,10 +222,12 @@ class TestContentViews(ApplicationLayerTest):
         # Publish the package, which also renders in this case
         published_package = self.testapp.post( publish_href )
         published_package = published_package.json_body
+        self.require_link_href_with_rel(published_package, VIEW_QUERY_JOB)
         assert_that( published_package['isRendered'], is_(True))
         job = published_package.get( 'LatestRenderJob' )
         assert_that( job, not_none())
         assert_that( job['State'], is_(SUCCESS))
+        self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
         unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
 
         # Student now sees both packages, as well as newly enrolled student
