@@ -36,6 +36,7 @@ class TestTranslators(ApplicationLayerTest):
         return result
 
     def _generate_from_file(self, source):
+        index = document = None
         current_dir = os.getcwd()
         try:
             # change directory early
@@ -53,7 +54,6 @@ class TestTranslators(ApplicationLayerTest):
             assert_that(os.path.exists(index), is_(True))
             with open(index, "r") as fp:
                 index = fp.read()
-            return (index, document)
         except Exception:
             print('Exception %s, %s' % (source, tex_dir))
             raise
@@ -61,14 +61,17 @@ class TestTranslators(ApplicationLayerTest):
             shutil.rmtree(tex_dir)
         finally:
             os.chdir(current_dir)
-        return document
+        return (index, document)
 
     @fudge.patch('nti.app.products.courseware_content.docutils.directives.is_dataserver_asset',
-                 'nti.app.products.courseware_content.docutils.directives.get_dataserver_asset' )
+                 'nti.app.products.courseware_content.docutils.directives.get_dataserver_asset')
     def test_figure(self, mock_isca, mock_gca):
         mock_isca.is_callable().with_args().returns(True)
         mock_gca.is_callable().with_args().returns(self._ichigo_asset())
         index, _ = self._generate_from_file('figure.rst')
-        assert_that(index, contains_string('<div class="figure" id="bankai inchigo">'))
-        assert_that(index, contains_string('<img alt="bankai inchigo"'))
-        assert_that(index, contains_string('<div class="caption"><b>Figure bankai </b>: <span>Bankai second form</span>'))
+        assert_that(index,
+                    contains_string('<div class="figure" id="bankai inchigo">'))
+        assert_that(index,
+                    contains_string('<img alt="bankai inchigo"'))
+        assert_that(index,
+                    contains_string('<div class="caption"><b>Figure bankai </b>: <span>Bankai second form</span>'))
