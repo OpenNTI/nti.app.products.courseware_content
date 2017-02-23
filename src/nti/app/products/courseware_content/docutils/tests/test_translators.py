@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import assert_that
+from hamcrest import contains_string
 
 import os
 import fudge
@@ -50,6 +51,9 @@ class TestTranslators(ApplicationLayerTest):
                                        jobname="sample")
             index = os.path.join(tex_dir, 'index.html')
             assert_that(os.path.exists(index), is_(True))
+            with open(index, "r") as fp:
+                index = fp.read()
+            return (index, document)
         except Exception:
             print('Exception %s, %s' % (source, tex_dir))
             raise
@@ -59,9 +63,12 @@ class TestTranslators(ApplicationLayerTest):
             os.chdir(current_dir)
         return document
 
-    @fudge.patch('nti.app.contentlibrary_rendering.docutils.utils.is_dataserver_asset',
-                 'nti.app.contentlibrary_rendering.docutils.utils.get_dataserver_asset' )
+    @fudge.patch('nti.app.products.courseware_content.docutils.directives.is_dataserver_asset',
+                 'nti.app.products.courseware_content.docutils.directives.get_dataserver_asset' )
     def test_figure(self, mock_isca, mock_gca):
         mock_isca.is_callable().with_args().returns(True)
         mock_gca.is_callable().with_args().returns(self._ichigo_asset())
-        self._generate_from_file('figure.rst')
+        index, _ = self._generate_from_file('figure.rst')
+        assert_that(index, contains_string('<div class="figure" id="bankai inchigo">'))
+        assert_that(index, contains_string('<img alt="bankai inchigo"'))
+        assert_that(index, contains_string('<div class="caption"><b>Figure bankai </b>: <span>Bankai second form</span>'))
