@@ -190,6 +190,7 @@ class TestContentViews(ApplicationLayerTest):
         res = self.testapp.post_json( library_href, data )
         res = res.json_body
         new_package_ntiid = res['NTIID']
+        package_href = res['href']
         assert_that( res['isRendered'], is_(False))
         assert_that( res.get('LatestRenderJob'), none())
         publish_href = self.require_link_href_with_rel(res, VIEW_PUBLISH)
@@ -314,6 +315,7 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( content_package_ntiids, has_length(1))
             assert_that( content_package_ntiids, contains(self.package_ntiid))
         self._check_package_state(new_package_ntiid, job_count=2)
+
         # Admin still has access since content is rendered
         self._get_page_info(new_package_ntiid, admin_environ)
         self._get_page_info(new_package_ntiid, student1_environ, status=403)
@@ -321,6 +323,29 @@ class TestContentViews(ApplicationLayerTest):
         self._get_page_info(new_package_ntiid, instructor_environ, status=403)
         self._get_page_info(new_package_ntiid, student3_section_environ, status=403)
 
+        # Test deleting the package (after republishing).
+        self.testapp.post( publish_href )
+        res = self.testapp.delete(package_href, status=409)
+        res = res.json_body
+        force_delete_href = self.require_link_href_with_rel(res, 'confirm')
+        self.testapp.delete(force_delete_href)
+
+        # Gone from package
+        for environ in (student1_environ, instructor_environ,
+                        student2_environ, student3_section_environ):
+            content_package_ntiids = _get_package_ntiids(environ=environ)
+            assert_that( content_package_ntiids, has_length(1))
+            assert_that( content_package_ntiids, contains(self.package_ntiid))
+
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            library = component.getUtility(IContentPackageLibrary)
+            package = library.contentUnitsByNTIID.get( new_package_ntiid )
+            assert_that( package, none() )
+            course = find_object_with_ntiid(self.entry_ntiid)
+            course = ICourseInstance(course)
+            bundle = course.ContentPackageBundle
+            assert_that(bundle.ContentPackages, has_length(1))
+            assert_that(bundle._ContentPackages_wrefs, has_length(1))
+
         # TODOe:
         # -Failed job
-        # -Delete
