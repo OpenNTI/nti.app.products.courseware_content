@@ -25,4 +25,4 @@ class TestDirectives(ApplicationLayerTest):
     def test_interface(self):
         from nti.app.products.courseware_content.docutils import directives
         assert_that(directives, validly_provides(IDirectivesModule))
-        assert_that(docutils_directive('course-asset', None, None), is_(not_none()))
+        assert_that(docutils_directive('course-figure', None, None), is_(not_none()))

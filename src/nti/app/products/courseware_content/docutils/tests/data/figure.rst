@@ -2,7 +2,7 @@
 Test Figure
 ===========
 
-.. course-asset:: ichigo.png
+.. course-figure:: ichigo.png
    :scale: 50 %
    :alt: bankai inchigo
 

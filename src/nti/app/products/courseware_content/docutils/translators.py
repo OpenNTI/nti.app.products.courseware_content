@@ -22,9 +22,9 @@ from nti.contentlibrary_rendering.docutils.interfaces import IRSTToPlastexNodeTr
 
 
 @interface.implementer(IRSTToPlastexNodeTranslator)
-class CourseAssetToPlastexNodeTranslator(TranslatorMixin):
+class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
 
-    __name__ = "course_asset"
+    __name__ = "course_figure"
 
     def do_translate(self, rst_node, tex_doc, tex_parent):
         # start pushing the rst_nodes

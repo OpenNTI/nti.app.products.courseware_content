@@ -12,5 +12,5 @@ logger = __import__('logging').getLogger(__name__)
 from docutils.nodes import figure
 
 
-class course_asset(figure):
+class course_figure(figure):
     pass
