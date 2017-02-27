@@ -16,6 +16,8 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from zope.event import notify
+
 from zope.security.interfaces import IPrincipal
 
 from nti.app.authentication import get_remote_user
@@ -36,6 +38,7 @@ from nti.contentlibrary_rendering import RST_MIMETYPE
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseSectionImporter
+from nti.contenttypes.courses.interfaces import CourseBundleUpdatedEvent
 
 from nti.contenttypes.courses.importer import BaseSectionImporter
 
@@ -75,11 +78,11 @@ class CourseContentPackagesImporter(BaseSectionImporter):
     @Lazy
     def library(self):
         return component.getUtility(IContentPackageLibrary)
-    
+
     def get_ntiid(self, obj):
         return getattr(obj, 'ntiid', None)
 
-    def is_new(self, obj, course):
+    def is_new(self, obj):
         ntiid = self.get_ntiid(obj)
         return not ntiid \
             or component.queryUtility(IContentPackage, name=ntiid) is None
@@ -87,8 +90,9 @@ class CourseContentPackagesImporter(BaseSectionImporter):
     def handle_package(self, the_object, source, course,
                        check_locked=False, filer=None):
         result = the_object
+        is_new = self.is_new(the_object)
         ntiid = self.get_ntiid(the_object)
-        if not self.is_new(the_object):
+        if not is_new:
             result = component.getUtility(IContentPackage, name=ntiid)
             assert IEditableContentPackage.providedBy(result)
             # copy all new content package attributes
@@ -106,30 +110,34 @@ class CourseContentPackagesImporter(BaseSectionImporter):
 
         is_published = source.get('isPublished')
         if is_published and (not check_locked or not result.is_locked()):
-            result.publish() # event trigger render job
+            result.publish()  # event trigger render job
 
         locked = source.get('isLocked')
         if locked and (not check_locked or not result.is_locked()):
             the_object.lock(event=False)
         # update indexes
         lifecycleevent.modified(result)
-        return result
+        return result, is_new
 
     def handle_packages(self, items, course, check_locked=False, filer=None):
-        result = []
+        added = []
         for ext_obj in items or ():
             source = copy.deepcopy(ext_obj)
             factory = find_factory_for(ext_obj)
-            the_object = factory() # create object
+            the_object = factory()  # create object
             assert IEditableContentPackage.providedBy(the_object)
             update_from_external_object(the_object, ext_obj, notify=False)
-            package = self.handle_package(the_object,
-                                          filer=filer,
-                                          source=source,
-                                          course=course,
-                                          check_locked=check_locked)
-            result.append(package)
-        return result
+            package, is_new = self.handle_package(the_object,
+                                                  filer=filer,
+                                                  source=source,
+                                                  course=course,
+                                                  check_locked=check_locked)
+            if is_new:
+                added.append(package)
+
+        if added:
+            notify(CourseBundleUpdatedEvent(course, added_packages=added))
+        return added
 
     def process_source(self, course, source, check_locked=True, filer=None):
         source = self.load(source)
