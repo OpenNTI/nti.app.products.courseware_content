@@ -40,7 +40,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
             packages = course.ContentPackageBundle.ContentPackages or ()
             for package in packages:
                 package = removeAllProxies(package)
-                if not IEditableContentPackage.providedBy(self, package):
+                if not IEditableContentPackage.providedBy(package):
                     continue
                 ext_obj = to_external_object(package,
                                              name="exporter",
