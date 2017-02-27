@@ -23,6 +23,10 @@
 				for="nti.contenttypes.courses.interfaces.ICourseContentPackageBundle
 					 pyramid.interfaces.IRequest" />
 
+	<!-- Exporter -->
+	<utility factory=".exporter.CourseContentPackagesExporter" 
+			 name="018:ContentPackages" />
+	
 	<!-- Directives / Roles -->
 	<include package=".docutils" />
 	

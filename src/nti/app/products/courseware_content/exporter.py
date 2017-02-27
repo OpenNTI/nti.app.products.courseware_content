@@ -32,7 +32,7 @@ NTIID = StandardExternalFields.NTIID
 
 
 @interface.implementer(ICourseSectionExporter)
-class ContentPacakgesExporter(BaseSectionExporter):
+class CourseContentPackagesExporter(BaseSectionExporter):
 
     def _output(self, course, filer=None, backup=True, salt=None):
         result = []
