@@ -151,6 +151,11 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(meta, not_none())
             assert_that(tuple(meta.values()), has_length(job_count))
 
+    def _get_package_path(self, package_ntiid):
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            package = find_object_with_ntiid(package_ntiid)
+            return package.root.absolute_path
+
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def test_post_content(self):
         """
@@ -233,6 +238,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( published_package_ntiid, is_not(new_package_ntiid))
         self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
         unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
+        package_path = self._get_package_path(new_package_ntiid)
 
         # Student now sees both packages, as well as newly enrolled student
         self._create_and_enroll('student2')
@@ -279,6 +285,8 @@ class TestContentViews(ApplicationLayerTest):
         published_package = self.testapp.post( publish_href )
         self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
         self._check_package_state(published_package_ntiid, job_count=2)
+        new_package_path = self._get_package_path(new_package_ntiid)
+        assert_that(new_package_path, is_(package_path))
 
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
@@ -351,6 +359,10 @@ class TestContentViews(ApplicationLayerTest):
             bundle = course.ContentPackageBundle
             assert_that(bundle.ContentPackages, has_length(1))
             assert_that(bundle._ContentPackages_wrefs, has_length(1))
+
+        # Filesystem is empty
+        assert_that(os.path.exists(package_path), is_(False))
+
 
         # TODOe:
         # -Failed job
