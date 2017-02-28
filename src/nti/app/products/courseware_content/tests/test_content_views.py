@@ -226,8 +226,11 @@ class TestContentViews(ApplicationLayerTest):
         self.require_link_href_with_rel(published_package, VIEW_QUERY_JOB)
         assert_that( published_package['isRendered'], is_(True))
         job = published_package.get( 'LatestRenderJob' )
+        # NTIID changes post-render
+        published_package_ntiid = published_package['NTIID']
         assert_that( job, not_none())
         assert_that( job['State'], is_(SUCCESS))
+        assert_that( published_package_ntiid, is_not(new_package_ntiid))
         self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
         unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
 
@@ -239,13 +242,13 @@ class TestContentViews(ApplicationLayerTest):
             content_package_ntiids = _get_package_ntiids( environ=environ )
             assert_that( content_package_ntiids, has_length(2))
             assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
-                                                                     new_package_ntiid))
-        self._get_page_info(new_package_ntiid, admin_environ)
-        self._get_page_info(new_package_ntiid, student1_environ)
-        self._get_page_info(new_package_ntiid, student2_environ)
-        self._get_page_info(new_package_ntiid, instructor_environ)
-        self._get_page_info(new_package_ntiid, student3_section_environ)
-        self._check_package_state(new_package_ntiid, job_count=1)
+                                                                     published_package_ntiid))
+        self._get_page_info(published_package_ntiid, admin_environ)
+        self._get_page_info(published_package_ntiid, student1_environ)
+        self._get_page_info(published_package_ntiid, student2_environ)
+        self._get_page_info(published_package_ntiid, instructor_environ)
+        self._get_page_info(published_package_ntiid, student3_section_environ)
+        self._check_package_state(published_package_ntiid, job_count=1)
 
         # Validate contents
         get_contents = self.testapp.get( contents_href )
@@ -275,7 +278,7 @@ class TestContentViews(ApplicationLayerTest):
         # Now re-publish and the publish_contents rel is no longer necessary
         published_package = self.testapp.post( publish_href )
         self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
-        self._check_package_state(new_package_ntiid, job_count=2)
+        self._check_package_state(published_package_ntiid, job_count=2)
 
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
@@ -307,21 +310,21 @@ class TestContentViews(ApplicationLayerTest):
         content_package_ntiids = _get_package_ntiids()
         assert_that( content_package_ntiids, has_length(2))
         assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
-                                                                 new_package_ntiid))
+                                                                 published_package_ntiid))
 
         for environ in (student1_environ, instructor_environ,
                         student2_environ, student3_section_environ):
             content_package_ntiids = _get_package_ntiids(environ=environ)
             assert_that( content_package_ntiids, has_length(1))
             assert_that( content_package_ntiids, contains(self.package_ntiid))
-        self._check_package_state(new_package_ntiid, job_count=2)
+        self._check_package_state(published_package_ntiid, job_count=2)
 
         # Admin still has access since content is rendered
-        self._get_page_info(new_package_ntiid, admin_environ)
-        self._get_page_info(new_package_ntiid, student1_environ, status=403)
-        self._get_page_info(new_package_ntiid, student2_environ, status=403)
-        self._get_page_info(new_package_ntiid, instructor_environ, status=403)
-        self._get_page_info(new_package_ntiid, student3_section_environ, status=403)
+        self._get_page_info(published_package_ntiid, admin_environ)
+        self._get_page_info(published_package_ntiid, student1_environ, status=403)
+        self._get_page_info(published_package_ntiid, student2_environ, status=403)
+        self._get_page_info(published_package_ntiid, instructor_environ, status=403)
+        self._get_page_info(published_package_ntiid, student3_section_environ, status=403)
 
         # Test deleting the package (after republishing).
         self.testapp.post( publish_href )
@@ -339,6 +342,8 @@ class TestContentViews(ApplicationLayerTest):
 
         with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
+            package = library.contentUnitsByNTIID.get( published_package_ntiid )
+            assert_that( package, none() )
             package = library.contentUnitsByNTIID.get( new_package_ntiid )
             assert_that( package, none() )
             course = find_object_with_ntiid(self.entry_ntiid)
