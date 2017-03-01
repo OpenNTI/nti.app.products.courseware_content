@@ -219,8 +219,8 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( content_package_ntiids, has_length(1))
             assert_that( content_package_ntiids, contains(self.package_ntiid))
         self._check_package_state(new_package_ntiid)
-        # Check page info (403s until rendered).
-        self._get_page_info(new_package_ntiid, admin_environ, status=403)
+        # Check page info (404s until rendered, or 403 if unublished).
+        self._get_page_info(new_package_ntiid, admin_environ, status=404)
         self._get_page_info(new_package_ntiid, student1_environ, status=403)
         self._get_page_info(new_package_ntiid, instructor_environ, status=403)
         self._get_page_info(new_package_ntiid, student3_section_environ, status=403)
