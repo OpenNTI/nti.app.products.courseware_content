@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.app.contentlibrary_rendering import VIEW_QUERY_JOB
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -30,6 +29,8 @@ from nti.dataserver.users import User
 from nti.app.contentlibrary import VIEW_CONTENTS
 from nti.app.contentlibrary import VIEW_PUBLISH_CONTENTS
 
+from nti.app.contentlibrary_rendering import VIEW_QUERY_JOB
+
 from nti.app.contentlibrary.utils import PAGE_INFO_MT
 
 from nti.app.products.courseware_content import VIEW_COURSE_LIBRARY
@@ -42,6 +43,11 @@ from nti.app.publishing import VIEW_UNPUBLISH
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.contentlibrary import CONTENT_UNIT_MIME_TYPE
+from nti.contentlibrary import CONTENT_PACKAGE_MIME_TYPE
+from nti.contentlibrary import RENDERABLE_CONTENT_UNIT_MIME_TYPE
+from nti.contentlibrary import RENDERABLE_CONTENT_PACKAGE_MIME_TYPE
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
@@ -118,7 +124,7 @@ class TestContentViews(ApplicationLayerTest):
             manager = ICourseEnrollmentManager(course)
             manager.enroll(new_user)
 
-    def _get_page_info(self, package_ntiid, environ, status=200):
+    def _test_page_info(self, package_ntiid, environ, status=200):
         accept_type = str('application/json')
         res = self.testapp.get( '/dataserver2/Objects/%s' % package_ntiid,
                            headers={str("Accept"): accept_type},
@@ -130,6 +136,18 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( res[CLASS], is_('PageInfo'))
             assert_that( res[MIMETYPE], is_(PAGE_INFO_MT))
             assert_that( res[LINKS], has_item( has_entry('rel', 'content')))
+        return res
+
+    def _test_get_package(self, package_ntiid, environ, status=200):
+        for mimetype in (CONTENT_UNIT_MIME_TYPE,
+                         CONTENT_PACKAGE_MIME_TYPE,
+                         RENDERABLE_CONTENT_UNIT_MIME_TYPE,
+                         RENDERABLE_CONTENT_PACKAGE_MIME_TYPE):
+            accept_type = str(mimetype)
+            res = self.testapp.get( '/dataserver2/Objects/%s' % package_ntiid,
+                                    headers={str("Accept"): accept_type},
+                                    extra_environ=environ,
+                                    status=status)
         return res
 
     def _check_package_state(self, package_ntiid, job_count=0):
@@ -220,10 +238,14 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( content_package_ntiids, contains(self.package_ntiid))
         self._check_package_state(new_package_ntiid)
         # Check page info (404s until rendered, or 403 if unublished).
-        self._get_page_info(new_package_ntiid, admin_environ, status=404)
-        self._get_page_info(new_package_ntiid, student1_environ, status=403)
-        self._get_page_info(new_package_ntiid, instructor_environ, status=403)
-        self._get_page_info(new_package_ntiid, student3_section_environ, status=403)
+        self._test_page_info(new_package_ntiid, admin_environ, status=404)
+        self._test_page_info(new_package_ntiid, student1_environ, status=403)
+        self._test_page_info(new_package_ntiid, instructor_environ, status=403)
+        self._test_page_info(new_package_ntiid, student3_section_environ, status=403)
+        self._test_get_package(new_package_ntiid, admin_environ)
+        self._test_get_package(new_package_ntiid, student1_environ, status=403)
+        self._test_get_package(new_package_ntiid, instructor_environ, status=403)
+        self._test_get_package(new_package_ntiid, student3_section_environ, status=403)
 
         # Publish the package, which also renders in this case
         published_package = self.testapp.post( publish_href )
@@ -249,11 +271,15 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( content_package_ntiids, has_length(2))
             assert_that( content_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                                      published_package_ntiid))
-        self._get_page_info(published_package_ntiid, admin_environ)
-        self._get_page_info(published_package_ntiid, student1_environ)
-        self._get_page_info(published_package_ntiid, student2_environ)
-        self._get_page_info(published_package_ntiid, instructor_environ)
-        self._get_page_info(published_package_ntiid, student3_section_environ)
+        self._test_page_info(published_package_ntiid, admin_environ)
+        self._test_page_info(published_package_ntiid, student1_environ)
+        self._test_page_info(published_package_ntiid, student2_environ)
+        self._test_page_info(published_package_ntiid, instructor_environ)
+        self._test_page_info(published_package_ntiid, student3_section_environ)
+        self._test_get_package(new_package_ntiid, admin_environ)
+        self._test_get_package(new_package_ntiid, student1_environ)
+        self._test_get_package(new_package_ntiid, instructor_environ)
+        self._test_get_package(new_package_ntiid, student3_section_environ)
         self._check_package_state(published_package_ntiid, job_count=1)
 
         # Validate contents
@@ -328,11 +354,16 @@ class TestContentViews(ApplicationLayerTest):
         self._check_package_state(published_package_ntiid, job_count=2)
 
         # Admin still has access since content is rendered
-        self._get_page_info(published_package_ntiid, admin_environ)
-        self._get_page_info(published_package_ntiid, student1_environ, status=403)
-        self._get_page_info(published_package_ntiid, student2_environ, status=403)
-        self._get_page_info(published_package_ntiid, instructor_environ, status=403)
-        self._get_page_info(published_package_ntiid, student3_section_environ, status=403)
+        self._test_page_info(published_package_ntiid, admin_environ)
+        self._test_page_info(published_package_ntiid, student1_environ, status=403)
+        self._test_page_info(published_package_ntiid, student2_environ, status=403)
+        self._test_page_info(published_package_ntiid, instructor_environ, status=403)
+        self._test_page_info(published_package_ntiid, student3_section_environ, status=403)
+        self._test_get_package(new_package_ntiid, admin_environ)
+        self._test_get_package(new_package_ntiid, student1_environ, status=403)
+        self._test_get_package(new_package_ntiid, student2_environ, status=403)
+        self._test_get_package(new_package_ntiid, instructor_environ, status=403)
+        self._test_get_package(new_package_ntiid, student3_section_environ, status=403)
 
         # Test deleting the package (after republishing).
         self.testapp.post( publish_href )
