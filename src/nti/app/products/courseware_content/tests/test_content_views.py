@@ -260,7 +260,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that( published_package_ntiid, is_not(new_package_ntiid))
         self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
         unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
-        package_path = self._get_package_path(new_package_ntiid)
+        original_package_path = self._get_package_path(new_package_ntiid)
 
         # Student now sees both packages, as well as newly enrolled student
         self._create_and_enroll('student2')
@@ -312,7 +312,8 @@ class TestContentViews(ApplicationLayerTest):
         self.forbid_link_with_rel(published_package.json_body, VIEW_PUBLISH_CONTENTS)
         self._check_package_state(published_package_ntiid, job_count=2)
         new_package_path = self._get_package_path(new_package_ntiid)
-        assert_that(new_package_path, is_(package_path))
+        # Path changes every render
+        assert_that(new_package_path, is_not(original_package_path))
 
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
@@ -372,6 +373,10 @@ class TestContentViews(ApplicationLayerTest):
         self.testapp.post( publish_href )
         res = self.testapp.delete(package_href, status=409)
         res = res.json_body
+        new_package_path = self._get_package_path(new_package_ntiid)
+        # Path changes every render
+        assert_that(new_package_path, is_not(original_package_path))
+
         force_delete_href = self.require_link_href_with_rel(res, 'confirm')
         self.testapp.delete(force_delete_href)
 
@@ -394,8 +399,9 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(bundle.ContentPackages, has_length(1))
             assert_that(bundle._ContentPackages_wrefs, has_length(1))
 
-        # Filesystem is empty
-        assert_that(os.path.exists(package_path), is_(False))
+        # Filesystem is empty (old package location still exists)
+        assert_that(os.path.exists(original_package_path), is_(True))
+        assert_that(os.path.exists(new_package_path), is_(False))
 
 
         # TODOe:
