@@ -399,8 +399,8 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(bundle.ContentPackages, has_length(1))
             assert_that(bundle._ContentPackages_wrefs, has_length(1))
 
-        # Filesystem is empty (old package location still exists)
-        assert_that(os.path.exists(original_package_path), is_(True))
+        # Filesystem is empty
+        assert_that(os.path.exists(original_package_path), is_(False))
         assert_that(os.path.exists(new_package_path), is_(False))
 
 
