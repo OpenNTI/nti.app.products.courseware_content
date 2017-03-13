@@ -24,8 +24,6 @@ import shutil
 
 from zope import component
 
-from nti.dataserver.users import User
-
 from nti.app.contentlibrary import VIEW_CONTENTS
 from nti.app.contentlibrary import VIEW_PUBLISH_CONTENTS
 
@@ -39,10 +37,6 @@ from nti.app.products.courseware.tests import PersistentInstructedCourseApplicat
 
 from nti.app.publishing import VIEW_PUBLISH
 from nti.app.publishing import VIEW_UNPUBLISH
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-
-from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.contentlibrary import CONTENT_UNIT_MIME_TYPE
 from nti.contentlibrary import CONTENT_PACKAGE_MIME_TYPE
@@ -62,7 +56,9 @@ from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
 
 from nti.contenttypes.courses.utils import get_content_unit_courses
 
-from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.users import User
+
+from nti.metadata import dataserver_metadata_catalog
 
 from nti.externalization.externalization import StandardExternalFields
 
@@ -71,6 +67,12 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.dataserver.tests import mock_dataserver
 
 CLASS = StandardExternalFields.CLASS
 LINKS = StandardExternalFields.LINKS
@@ -261,7 +263,16 @@ class TestContentViews(ApplicationLayerTest):
         self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
         unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
         original_package_path = self._get_package_path(new_package_ntiid)
-
+        # test job is recorded in metadata
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            catalog = dataserver_metadata_catalog()
+            query = {
+                'containerId': {'any_of':(published_package_ntiid,)},
+                'mimeType': {'any_of': (u'application/vnd.nextthought.content.packagerenderjob',)}
+            }
+            initds = catalog.apply(query) or ()
+            assert_that(list(initds), has_length(1))
+            
         # Student now sees both packages, as well as newly enrolled student
         self._create_and_enroll('student2')
         student2_environ = self._make_extra_environ(username='student2')
@@ -403,6 +414,5 @@ class TestContentViews(ApplicationLayerTest):
         assert_that(os.path.exists(original_package_path), is_(False))
         assert_that(os.path.exists(new_package_path), is_(False))
 
-
-        # TODOe:
+        # TODO:
         # -Failed job
