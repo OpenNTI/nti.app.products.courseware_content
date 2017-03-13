@@ -176,6 +176,19 @@ class TestContentViews(ApplicationLayerTest):
             package = find_object_with_ntiid(package_ntiid)
             return package.root.absolute_path
 
+    def _validate_job_objects(self, package_ntiid, job_count):
+        """
+        Validate job count.
+        """
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            catalog = dataserver_metadata_catalog()
+            query = {
+                'containerId': {'any_of':(package_ntiid,)},
+                'mimeType': {'any_of': (u'application/vnd.nextthought.content.packagerenderjob',)}
+            }
+            initds = catalog.apply(query) or ()
+            assert_that(list(initds), has_length(job_count))
+
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def test_post_content(self):
         """
@@ -263,16 +276,8 @@ class TestContentViews(ApplicationLayerTest):
         self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
         unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
         original_package_path = self._get_package_path(new_package_ntiid)
-        # test job is recorded in metadata
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
-            catalog = dataserver_metadata_catalog()
-            query = {
-                'containerId': {'any_of':(published_package_ntiid,)},
-                'mimeType': {'any_of': (u'application/vnd.nextthought.content.packagerenderjob',)}
-            }
-            initds = catalog.apply(query) or ()
-            assert_that(list(initds), has_length(1))
-            
+        self._validate_job_objects(published_package_ntiid, 1)
+
         # Student now sees both packages, as well as newly enrolled student
         self._create_and_enroll('student2')
         student2_environ = self._make_extra_environ(username='student2')
@@ -325,6 +330,7 @@ class TestContentViews(ApplicationLayerTest):
         new_package_path = self._get_package_path(new_package_ntiid)
         # Path changes every render
         assert_that(new_package_path, is_not(original_package_path))
+        self._validate_job_objects(published_package_ntiid, 2)
 
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
@@ -390,6 +396,7 @@ class TestContentViews(ApplicationLayerTest):
 
         force_delete_href = self.require_link_href_with_rel(res, 'confirm')
         self.testapp.delete(force_delete_href)
+        self._validate_job_objects(published_package_ntiid, 0)
 
         # Gone from package
         for environ in (student1_environ, instructor_environ,
