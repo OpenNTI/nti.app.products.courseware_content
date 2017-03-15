@@ -272,7 +272,6 @@ class TestContentViews(ApplicationLayerTest):
         published_package_ntiid = published_package['NTIID']
         assert_that( job, not_none())
         assert_that( job['State'], is_(SUCCESS))
-        assert_that( published_package_ntiid, is_not(new_package_ntiid))
         self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
         unpublish_href = self.require_link_href_with_rel(published_package, VIEW_UNPUBLISH)
         original_package_path = self._get_package_path(new_package_ntiid)
