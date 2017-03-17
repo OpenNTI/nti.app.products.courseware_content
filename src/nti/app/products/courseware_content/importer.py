@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import copy
+import time
 
 from zope import component
 from zope import interface
@@ -53,6 +54,8 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.property.property import Lazy
 
+from nti.recorder.interfaces import TRX_TYPE_IMPORT
+
 from nti.recorder.utils import record_transaction
 
 ITEMS = StandardExternalFields.ITEMS
@@ -68,7 +71,6 @@ def copy_attributes(source, target, names):
 @interface.implementer(ICourseSectionImporter)
 class CourseContentPackagesImporter(BaseSectionImporter):
 
-    TRX_TYPE_IMPORT = "imported"
     CONTENT_PACKAGE_INDEX = "content_pacakges.json"
 
     @Lazy
@@ -107,10 +109,11 @@ class CourseContentPackagesImporter(BaseSectionImporter):
             result.contents = the_object.contents
             result.contentType = the_object.contentType or RST_MIMETYPE
             # record trx
-            record_transaction(result, type_=self.TRX_TYPE_IMPORT,
+            record_transaction(result, type_=TRX_TYPE_IMPORT,
                                ext_value={
                                     'contents': result.contents,
                                     'contentType': result.contentType,
+                                    'version': str(int(time.time()))
                                })
         else:
             register_content_units(course, result)
