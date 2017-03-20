@@ -267,6 +267,7 @@ class TestContentViews(ApplicationLayerTest):
         published_package = published_package.json_body
         self.require_link_href_with_rel(published_package, VIEW_QUERY_JOB)
         assert_that( published_package['isRendered'], is_(True))
+        assert_that( published_package['isPublished'], is_(True))
         job = published_package.get( 'LatestRenderJob' )
         # NTIID changes post-render
         published_package_ntiid = published_package['NTIID']
