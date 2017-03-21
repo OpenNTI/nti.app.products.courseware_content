@@ -79,6 +79,12 @@ LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 
 
+SYNC_PACKAGES = [
+    u'tag:nextthought.com,2011-10:OU-HTML-ENGR1510_Intro_to_Water.engr_1510_901_introduction_to_water',
+    u'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice',
+    u'tag:nextthought.com,2011-10:OU-HTML-CS1323_F_2015_Intro_to_Computer_Programming.introduction_to_computer_programming']
+
+
 class TestContentViews(ApplicationLayerTest):
 
     layer = PersistentInstructedCourseApplicationTestLayer
@@ -189,11 +195,24 @@ class TestContentViews(ApplicationLayerTest):
             initds = catalog.apply(query) or ()
             assert_that(list(initds), has_length(job_count))
 
+    def _get_library_packages(self):
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            library = component.getUtility(IContentPackageLibrary)
+            result = [x.ntiid for x in library.contentPackages]
+            return result
+
+    def _sync_library(self):
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            library = component.getUtility(IContentPackageLibrary)
+            return library.syncContentPackages()
+
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def test_post_content(self):
         """
         Test creating a new package in a course.
         """
+        base_package_ntiids = self._get_library_packages()
+        assert_that( base_package_ntiids, contains_inanyorder(*SYNC_PACKAGES))
         admin_environ = self._make_extra_environ(username="sjohnson@nextthought.com")
         instructor_environ = self._make_extra_environ(username="cs1323_instructor")
         self._create_and_enroll('student1')
@@ -385,6 +404,15 @@ class TestContentViews(ApplicationLayerTest):
         self._test_get_package(new_package_ntiid, student2_environ, status=403)
         self._test_get_package(new_package_ntiid, instructor_environ, status=403)
         self._test_get_package(new_package_ntiid, student3_section_environ, status=403)
+
+        # Validate sync does not mangle anything
+        sync_results = self._sync_library()
+        assert_that(sync_results.Added, none())
+        assert_that(sync_results.Removed, none())
+        assert_that(sync_results.Modified, none())
+        current_package_ntiids = self._get_library_packages()
+        all_packages = tuple(SYNC_PACKAGES) + (new_package_ntiid,)
+        assert_that( current_package_ntiids, contains_inanyorder(*all_packages))
 
         # Test deleting the package (after republishing).
         self.testapp.post( publish_href )
