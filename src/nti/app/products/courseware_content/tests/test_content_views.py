@@ -357,8 +357,20 @@ class TestContentViews(ApplicationLayerTest):
                          upload_files=[
                             ('contents', 'contents.rst', bytes(conflict_contents))],
                          status=409)
-        self.testapp.put('%s?version=%s' % (contents_href, valid_version),
+        res = self.testapp.put('%s?version=%s' % (contents_href, valid_version),
                         upload_files=[
+                            ('contents', 'contents.rst', bytes(conflict_contents))])
+        valid_version = res.json_body['version']
+
+        # Body version
+        self.testapp.put('%s' % contents_href,
+                       {'version': '0'},
+                       upload_files=[
+                            ('contents', 'contents.rst', bytes(conflict_contents))],
+                       status=409)
+        self.testapp.put('%s' % contents_href,
+                       {'version': valid_version},
+                       upload_files=[
                             ('contents', 'contents.rst', bytes(conflict_contents))])
 
         # Test validation 422 (on publish/render)
@@ -374,6 +386,7 @@ class TestContentViews(ApplicationLayerTest):
                                     ('contents', 'contents.rst', bytes(conflict_contents))])
         res = res.json_body
         valid_version = res['version']
+
 
         # Unpublish our contents and access goes away
         res = self.testapp.post( unpublish_href, status=409 )
