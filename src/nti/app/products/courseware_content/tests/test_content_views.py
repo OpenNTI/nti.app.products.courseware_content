@@ -353,24 +353,40 @@ class TestContentViews(ApplicationLayerTest):
 
         # Validate versioning
         conflict_contents = "%s\nconflict" % publish_contents
-        self.testapp.put('%s?version=%s' % (contents_href, 'invalid_version'),
-                         upload_files=[
-                            ('contents', 'contents.rst', bytes(conflict_contents))],
-                         status=409)
+        res = self.testapp.put('%s?version=%s' % (contents_href, 'invalid_version'),
+                             upload_files=[
+                                ('contents', 'contents.rst', bytes(conflict_contents))],
+                             status=409)
+        self.require_link_href_with_rel(res.json_body, 'overwrite')
+        self.require_link_href_with_rel(res.json_body, 'refresh')
         res = self.testapp.put('%s?version=%s' % (contents_href, valid_version),
                         upload_files=[
                             ('contents', 'contents.rst', bytes(conflict_contents))])
         valid_version = res.json_body['version']
 
         # Body version
-        self.testapp.put('%s' % contents_href,
-                       {'version': '0'},
-                       upload_files=[
-                            ('contents', 'contents.rst', bytes(conflict_contents))],
-                       status=409)
+        res = self.testapp.put('%s' % contents_href,
+                               {'version': '0'},
+                               upload_files=[
+                                    ('contents', 'contents.rst', bytes(conflict_contents))],
+                               status=409)
+        self.require_link_href_with_rel(res.json_body, 'overwrite')
+        self.require_link_href_with_rel(res.json_body, 'refresh')
         self.testapp.put('%s' % contents_href,
                        {'version': valid_version},
                        upload_files=[
+                            ('contents', 'contents.rst', bytes(conflict_contents))])
+
+        # Use version links
+        res = self.testapp.put('%s' % contents_href,
+                               {'version': '0'},
+                               upload_files=[
+                                    ('contents', 'contents.rst', bytes(conflict_contents))],
+                               status=409)
+        force_href = self.require_link_href_with_rel(res.json_body, 'overwrite')
+        self.require_link_href_with_rel(res.json_body, 'refresh')
+        self.testapp.put(force_href,
+                        upload_files=[
                             ('contents', 'contents.rst', bytes(conflict_contents))])
 
         # Test validation 422 (on publish/render)
