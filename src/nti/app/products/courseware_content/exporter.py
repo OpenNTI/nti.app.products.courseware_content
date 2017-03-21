@@ -27,6 +27,7 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.proxy import removeAllProxies
 
+OID = StandardExternalFields.OID
 ITEMS = StandardExternalFields.ITEMS
 NTIID = StandardExternalFields.NTIID
 
@@ -45,7 +46,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
                                          name="exporter",
                                          decorate=False)
             if not backup:
-                for name in (NTIID, NTIID.lower()):
+                for name in (NTIID, NTIID.lower(), OID):
                     ext_obj.pop(name, None)
             result.append(ext_obj)
         return result
