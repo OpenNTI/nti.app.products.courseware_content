@@ -35,6 +35,8 @@ from nti.contentlibrary.interfaces import IEditableContentPackage
 
 from nti.contentlibrary.library import register_content_units
 
+from nti.contentlibrary.utils import make_content_package_ntiid
+
 from nti.contentlibrary_rendering import RST_MIMETYPE
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -49,8 +51,6 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
-
-from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.property.property import Lazy
 
@@ -117,7 +117,7 @@ class CourseContentPackagesImporter(BaseSectionImporter):
                                })
         else:
             register_content_units(course, result)
-            result.ntiid = to_external_ntiid_oid(result)
+            result.ntiid = make_content_package_ntiid(result)
             self.library.add(result, event=False)
 
         is_published = source.get('isPublished')
