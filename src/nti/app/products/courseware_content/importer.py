@@ -87,18 +87,16 @@ class CourseContentPackagesImporter(BaseSectionImporter):
     def get_ntiid(self, obj):
         return getattr(obj, 'ntiid', None)
 
-    def is_new(self, obj):
-        ntiid = self.get_ntiid(obj)
-        return not ntiid \
-            or component.queryUtility(IContentPackage, name=ntiid) is None
+    def is_new(self, obj, course=None):
+        ntiid = self.get_ntiid(obj) or u''
+        return component.queryUtility(IContentPackage, name=ntiid)
 
     def handle_package(self, the_object, source, course,
                        check_locked=False, filer=None):
         result = the_object
-        is_new = self.is_new(the_object)
-        ntiid = self.get_ntiid(the_object)
-        if not is_new:
-            result = component.getUtility(IContentPackage, name=ntiid)
+        stored = self.is_new(the_object, course)
+        if stored is not None:
+            result = stored # replace
             assert IEditableContentPackage.providedBy(result)
             # copy all new content package attributes
             copy_attributes(the_object, result, IContentPackage.names())
@@ -129,7 +127,7 @@ class CourseContentPackagesImporter(BaseSectionImporter):
             the_object.lock(event=False)
         # update indexes
         lifecycleevent.modified(result)
-        return result, is_new
+        return result, (stored is None)
 
     def handle_packages(self, items, course, check_locked=False, filer=None):
         added = []
