@@ -37,6 +37,8 @@ from nti.contentlibrary.library import register_content_units
 
 from nti.contentlibrary.utils import make_content_package_ntiid
 
+from nti.contentlibrary.validators import validate_content_package
+
 from nti.contentlibrary_rendering import RST_MIMETYPE
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
@@ -51,6 +53,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.property.property import Lazy
 
@@ -88,15 +92,23 @@ class CourseContentPackagesImporter(BaseSectionImporter):
         return getattr(obj, 'ntiid', None)
 
     def is_new(self, obj, course=None):
-        ntiid = self.get_ntiid(obj) or u''
-        return component.queryUtility(IContentPackage, name=ntiid)
+        ntiid = self.get_ntiid(obj)
+        if ntiid:
+            return find_object_with_ntiid(ntiid)
+        return None
+
+    def validate_content_package(self, package):
+        error = validate_content_package(package)
+        if error is not None:
+            e, unused = error
+            raise e
 
     def handle_package(self, the_object, source, course,
                        check_locked=False, filer=None):
         result = the_object
         stored = self.is_new(the_object, course)
         if stored is not None:
-            result = stored # replace
+            result = stored  # replace
             assert IEditableContentPackage.providedBy(result)
             # copy all new content package attributes
             copy_attributes(the_object, result, IContentPackage.names())
@@ -109,9 +121,9 @@ class CourseContentPackagesImporter(BaseSectionImporter):
             # record trx
             record_transaction(result, type_=TRX_TYPE_IMPORT,
                                ext_value={
-                                    'contents': result.contents,
-                                    'contentType': result.contentType,
-                                    'version': str(int(time.time()))
+                                   'contents': result.contents,
+                                   'contentType': result.contentType,
+                                   'version': str(int(time.time()))
                                })
         else:
             register_content_units(course, result)
@@ -120,6 +132,7 @@ class CourseContentPackagesImporter(BaseSectionImporter):
 
         is_published = source.get('isPublished')
         if is_published and (not check_locked or not result.is_locked()):
+            self.validate_content_package(result)
             result.publish()  # event trigger render job
 
         locked = source.get('isLocked')
