@@ -43,12 +43,16 @@ from nti.contentlibrary import CONTENT_PACKAGE_MIME_TYPE
 from nti.contentlibrary import RENDERABLE_CONTENT_UNIT_MIME_TYPE
 from nti.contentlibrary import RENDERABLE_CONTENT_PACKAGE_MIME_TYPE
 
+from nti.contentlibrary.bundle import sync_bundle_from_json_key
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 from nti.contentlibrary_rendering.interfaces import SUCCESS
 
 from nti.contentlibrary_rendering.interfaces import IContentPackageRenderMetadata
+
+from nti.contenttypes.courses.common import get_course_packages
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
@@ -202,9 +206,29 @@ class TestContentViews(ApplicationLayerTest):
             return result
 
     def _sync_library(self):
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        # Important to test sync from parent site
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             return library.syncContentPackages()
+
+    def _get_course_package_ntiids(self, course_ntiid):
+        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+            course = find_object_with_ntiid(course_ntiid)
+            package_ntiids = [x.ntiid for x in get_course_packages(course)]
+        return package_ntiids
+
+    def _test_sync_bundle(self, course_ntiid, new_package_ntiid):
+        package_ntiids = self._get_course_package_ntiids(course_ntiid)
+        # Important to test sync from parent site
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
+            course = find_object_with_ntiid(course_ntiid)
+            key = course.root.getChildNamed('bundle_meta_info.json')
+            sync_bundle_from_json_key(key, course.ContentPackageBundle, excluded_keys=('ntiid',))
+
+        sync_package_ntiids = self._get_course_package_ntiids(course_ntiid)
+        assert_that(package_ntiids, has_item(new_package_ntiid))
+        assert_that(sync_package_ntiids, has_item(new_package_ntiid))
+        assert_that(package_ntiids, contains_inanyorder(*sync_package_ntiids))
 
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def test_post_content(self):
@@ -405,7 +429,6 @@ class TestContentViews(ApplicationLayerTest):
         res = res.json_body
         valid_version = res['version']
 
-
         # Unpublish our contents and access goes away
         res = self.testapp.post( unpublish_href, status=409 )
         res = res.json_body
@@ -443,7 +466,19 @@ class TestContentViews(ApplicationLayerTest):
         assert_that(sync_results.Modified, none())
         current_package_ntiids = self._get_library_packages()
         all_packages = tuple(SYNC_PACKAGES) + (new_package_ntiid,)
-        assert_that( current_package_ntiids, contains_inanyorder(*all_packages))
+        assert_that(current_package_ntiids, contains_inanyorder(*all_packages))
+        self._test_sync_bundle(course_ntiid, new_package_ntiid)
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
+            library = component.getUtility(IContentPackageLibrary)
+            package = library.contentUnitsByNTIID.get( published_package_ntiid )
+            assert_that( package, not_none() )
+            package = library.contentUnitsByNTIID.get( new_package_ntiid )
+            assert_that( package, not_none() )
+            course = find_object_with_ntiid(self.entry_ntiid)
+            course = ICourseInstance(course)
+            bundle = course.ContentPackageBundle
+            assert_that(bundle.ContentPackages, has_length(2))
+            assert_that(bundle._ContentPackages_wrefs, has_length(2))
 
         # Test deleting the package (after republishing).
         self.testapp.post( publish_href )
@@ -464,7 +499,7 @@ class TestContentViews(ApplicationLayerTest):
             assert_that( content_package_ntiids, has_length(1))
             assert_that( content_package_ntiids, contains(self.package_ntiid))
 
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             package = library.contentUnitsByNTIID.get( published_package_ntiid )
             assert_that( package, none() )

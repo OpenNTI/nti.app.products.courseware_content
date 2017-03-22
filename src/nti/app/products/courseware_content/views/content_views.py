@@ -34,6 +34,13 @@ class CourseLibraryPostView(LibraryPostView):
     after first placing it in the site :class:`IContentPackageLibrary`.
     """
 
+    def get_library(self):
+        """
+        Override to install the new content in the course site library.
+        """
+        course = self.context.course
+        return super(CourseLibraryPostView, self).get_library( context=course )
+
     def _do_call(self):
         course = self.context.course
         package = super(CourseLibraryPostView, self)._do_call()
