@@ -384,7 +384,9 @@ class TestContentViews(ApplicationLayerTest):
                                     ('contents', 'contents.rst', bytes(conflict_contents))],
                                status=409)
         force_href = self.require_link_href_with_rel(res.json_body, 'overwrite')
-        self.require_link_href_with_rel(res.json_body, 'refresh')
+        refresh_href = self.require_link_href_with_rel(res.json_body, 'refresh')
+        res = self.testapp.get(refresh_href)
+        assert_that( res.json_body['contents'], not_none() )
         self.testapp.put(force_href,
                         upload_files=[
                             ('contents', 'contents.rst', bytes(conflict_contents))])
