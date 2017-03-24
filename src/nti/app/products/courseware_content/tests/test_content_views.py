@@ -346,8 +346,8 @@ class TestContentViews(ApplicationLayerTest):
         get_contents = get_contents.json_body
         assert_that( get_contents['data'], is_(publish_contents))
 
-        # Now update contents (unpublished).
-        new_contents = "%s\nmore text" % publish_contents
+        # Now update contents (empty) (unpublished).
+        new_contents = "%s" % publish_contents
         res = self.testapp.put(contents_href,
                                upload_files=[
                                     ('contents', 'contents.rst', bytes(new_contents))])
