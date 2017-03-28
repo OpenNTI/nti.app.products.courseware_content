@@ -20,7 +20,6 @@ from hamcrest import contains_inanyorder
 does_not = is_not
 
 import os
-import shutil
 
 from zope import component
 
@@ -46,7 +45,7 @@ from nti.contentlibrary import RENDERABLE_CONTENT_PACKAGE_MIME_TYPE
 from nti.contentlibrary.bundle import sync_bundle_from_json_key
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
+from nti.contentlibrary.interfaces import IRenderableContentPackage
 
 from nti.contentlibrary_rendering.interfaces import SUCCESS
 
@@ -67,10 +66,6 @@ from nti.metadata import dataserver_metadata_catalog
 from nti.externalization.externalization import StandardExternalFields
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.site.interfaces import IHostPolicyFolder
-
-from nti.traversal.traversal import find_interface
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -101,15 +96,14 @@ class TestContentViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS(testapp=True, users=True)
     def tearDown(self):
         """
-        Clean up our site library; this will be distinct
-        from the syncable site - platform.ou.edu.
+        Clean up our site library by removing all IRenderableContentPackages
+        (this will also clean up on disk files).
         """
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
-            folder = find_interface(library, IHostPolicyFolder, strict=False)
-            assert_that( folder.__name__, is_('janux.ou.edu'))
-            enumeration = IDelimitedHierarchyContentPackageEnumeration(library)
-            shutil.rmtree(enumeration.root.absolute_path, ignore_errors=True)
+            for package in library.contentPackages:
+                if IRenderableContentPackage.providedBy(package):
+                    library.remove(package)
 
     def _get_rst_data(self, filename='sample.rst'):
         path = os.path.join(os.path.dirname(__file__), filename)
@@ -512,8 +506,8 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(bundle._ContentPackages_wrefs, has_length(1))
 
         # Filesystem is empty
-        assert_that(os.path.exists(original_package_path), is_(False))
-        assert_that(os.path.exists(new_package_path), is_(False))
+        assert_that(os.path.exists(original_package_path), is_(False), original_package_path)
+        assert_that(os.path.exists(new_package_path), is_(False), new_package_path)
 
         # TODO:
         # -Failed job
