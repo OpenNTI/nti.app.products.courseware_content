@@ -17,6 +17,8 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.event import notify
 
 from zope.security.interfaces import IPrincipal
@@ -55,8 +57,6 @@ from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.property.property import Lazy
 
 from nti.recorder.interfaces import TRX_TYPE_IMPORT
 
