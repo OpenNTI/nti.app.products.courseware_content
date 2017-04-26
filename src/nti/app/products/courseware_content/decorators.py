@@ -27,8 +27,6 @@ from nti.contenttypes.courses.legacy_catalog import ILegacyCourseInstance
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseContentPackageBundle
 
-from nti.coremetadata.interfaces import IPublishable
-
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
@@ -37,6 +35,8 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
+
+from nti.publishing.interfaces import IPublishable
 
 LINKS = StandardExternalFields.LINKS
 
