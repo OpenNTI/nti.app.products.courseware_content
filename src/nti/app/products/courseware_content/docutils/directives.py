@@ -21,11 +21,18 @@ from nti.app.contentlibrary_rendering.docutils.utils import is_dataserver_asset
 
 from nti.app.products.courseware_content.docutils.nodes import course_figure
 
+from nti.common.string import is_true
+
+
+def true_value(argument):
+    return is_true(argument)
+
 
 class CourseFigure(Figure):
 
     option_spec = dict(Figure.option_spec)
     option_spec.pop('target', None)
+    option_spec['local'] = true_value
 
     def run(self):
         reference = directives.uri(self.arguments[0])
@@ -57,6 +64,7 @@ class CourseFigure(Figure):
                                *fig_children[1:],
                                **node_attributes)
         result['uri'] = reference
+        result['local'] = is_true(self.options.get('local'))
         return [result]
 
 

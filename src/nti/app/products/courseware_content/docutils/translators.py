@@ -13,7 +13,9 @@ from zope import interface
 
 from nti.base._compat import unicode_
 
+from nti.app.contentlibrary_rendering.docutils.utils import has_access
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
+from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
 
 from nti.contentlibrary_rendering.docutils.translators import build_nodes
 from nti.contentlibrary_rendering.docutils.translators import TranslatorMixin
@@ -26,7 +28,17 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
 
     __name__ = "course_figure"
 
+    def save_local(self, rst_node):
+        uri = rst_node['uri']
+        asset = get_dataserver_asset(uri)
+        if asset is None:
+            raise ValueError("course asset is missing")
+        if not has_access(asset):
+            raise TypeError("course asset is inaccessible")
+
     def do_translate(self, rst_node, tex_doc, tex_parent):
+        if rst_node['local']:
+            self.save_local(rst_node)
         # start pushing the rst_nodes
         tex_doc.px_toggle_skip()
         result, _ = process_rst_figure(rst_node, tex_doc)
