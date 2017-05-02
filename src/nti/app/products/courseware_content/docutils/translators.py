@@ -16,6 +16,7 @@ from nti.base._compat import unicode_
 from nti.app.contentlibrary_rendering.docutils.utils import has_access
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
 from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
+from nti.app.contentlibrary_rendering.docutils.utils import save_to_course_assets
 
 from nti.contentlibrary_rendering.docutils.translators import build_nodes
 from nti.contentlibrary_rendering.docutils.translators import TranslatorMixin
@@ -35,6 +36,8 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
             raise ValueError("course asset is missing")
         if not has_access(asset):
             raise TypeError("course asset is inaccessible")
+        rst_node['uri'] = save_to_course_assets(asset)
+        return rst_node
 
     def do_translate(self, rst_node, tex_doc, tex_parent):
         if rst_node['local']:
