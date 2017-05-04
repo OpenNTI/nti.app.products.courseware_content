@@ -13,6 +13,8 @@ from zope import interface
 
 from nti.contentlibrary.interfaces import IEditableContentPackage
 
+from nti.contenttypes.courses.common import get_course_content_packages
+
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 from nti.contenttypes.courses.interfaces import IContentCourseInstance
 
@@ -37,7 +39,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
 
     def _output(self, course, filer=None, backup=True, salt=None):
         result = []
-        packages = course.ContentPackageBundle.ContentPackages or ()
+        packages = get_course_content_packages(course)
         for package in packages:
             package = removeAllProxies(package)
             if not IEditableContentPackage.providedBy(package):
