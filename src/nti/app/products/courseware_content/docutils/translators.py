@@ -13,7 +13,6 @@ from zope import interface
 
 from nti.base._compat import unicode_
 
-from nti.app.contentlibrary_rendering.docutils.utils import has_access
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
 from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
 from nti.app.contentlibrary_rendering.docutils.utils import save_to_course_assets
@@ -34,8 +33,6 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         asset = get_dataserver_asset(uri)
         if asset is None:
             raise ValueError("course asset is missing")
-        if not has_access(asset):
-            raise TypeError("course asset is inaccessible")
         rst_node['uri'] = save_to_course_assets(asset)
         return rst_node
 
