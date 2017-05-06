@@ -121,9 +121,9 @@ class CourseContentPackagesImporter(BaseSectionImporter):
             # record trx
             record_transaction(result, type_=TRX_TYPE_IMPORT,
                                ext_value={
-                                   'contents': result.contents,
-                                   'contentType': result.contentType,
-                                   'version': str(int(time.time()))
+                                   u'contents': result.contents,
+                                   u'contentType': result.contentType,
+                                   u'version': str(int(time.time()))
                                })
         else:
             register_content_units(course, result)
