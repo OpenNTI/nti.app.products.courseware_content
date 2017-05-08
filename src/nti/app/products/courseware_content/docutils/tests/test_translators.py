@@ -16,6 +16,8 @@ import fudge
 import shutil
 import tempfile
 
+from nti.app.products.courseware.resources.model import CourseContentFile
+
 from nti.contentlibrary_rendering._render import render_document
 
 from nti.contentlibrary_rendering.docutils import publish_doctree
@@ -36,8 +38,6 @@ class TestTranslators(ApplicationLayerTest):
             # change directory early
             tex_dir = tempfile.mkdtemp(prefix="render_")
             os.chdir(tex_dir)
-            # make asset available
-            shutil.copy(self._ichigo_asset(), tex_dir)
             # parse and run directives
             name = os.path.join(os.path.dirname(__file__), 'data/%s' % source)
             with open(name, "rb") as fp:
@@ -59,9 +59,16 @@ class TestTranslators(ApplicationLayerTest):
             os.chdir(current_dir)
         return (index, document)
 
-    @fudge.patch('nti.app.products.courseware_content.docutils.directives.is_dataserver_asset')
-    def test_figure(self, mock_isca):
+    @fudge.patch('nti.app.products.courseware_content.docutils.directives.is_dataserver_asset',
+                 'nti.app.products.courseware_content.docutils.translators.get_dataserver_asset')
+    def test_figure(self, mock_isca, mock_gda):
         mock_isca.is_callable().with_args().returns(True)
+        
+        asset = CourseContentFile()
+        asset.name = asset.filename = 'ichigo.png'
+        with open(self._ichigo_asset(), "rb") as fp:
+            asset.data = fp.read()
+        mock_gda.is_callable().with_args().returns(asset)
         index, _ = self._generate_from_file('figure.rst')
         assert_that(index,
                     contains_string('<div class="figure" id="bankai inchigo">'))

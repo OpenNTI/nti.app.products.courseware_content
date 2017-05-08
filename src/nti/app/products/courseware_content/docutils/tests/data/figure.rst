@@ -5,7 +5,7 @@ Test Figure
 .. course-figure:: ichigo.png
    :scale: 50 %
    :alt: bankai inchigo
-   :local: False
+   :local: True
 
    Figure bankai
 
