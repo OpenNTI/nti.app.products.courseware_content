@@ -11,7 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.base._compat import unicode_
+from plone.namedfile.file import getImageInfo
+
+from nti.base._compat import text_
 
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
 from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
@@ -28,12 +30,22 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
 
     __name__ = "course_figure"
 
+    supported_local_types = ('image/jpeg', 'image/png')
+
+    @classmethod
+    def is_supported_local_type(cls, asset):
+        if hasattr(asset, 'data'):
+            content_type, _, _ = getImageInfo(asset.data)
+            return content_type in cls.supported_local_types
+        return False
+
     def save_local(self, rst_node):
         uri = rst_node['uri']
         asset = get_dataserver_asset(uri)
         if asset is None:
             raise ValueError("course asset is missing")
-        rst_node['uri'] = save_to_course_assets(asset)
+        if self.is_supported_local_type(asset):
+            rst_node['uri'] = save_to_course_assets(asset)
         return rst_node
 
     def do_translate(self, rst_node, tex_doc, tex_parent):
@@ -66,7 +78,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         figure.append(caption)
         for node in rst_node.children or ():
             if node.tagname == '#text':
-                caption.title = unicode_(node.astext())
+                caption.title = text_(node.astext())
                 break
         return caption
 
