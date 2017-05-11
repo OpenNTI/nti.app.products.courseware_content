@@ -87,6 +87,10 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         caption.title = u' '.join(all_text)
         return caption
 
+    def _join_text(self, *args):
+        result = [a or u'' for a in args]
+        return u' '.join(result)
+            
     def do_depart(self, rst_node, tex_node, tex_doc):
         # Allow processing
         tex_doc.px_toggle_skip()
@@ -100,11 +104,11 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
                 legend_text = self.do_legend(node, tex_node, 
                                              caption_node, tex_doc)
         # set image caption
-        caption_text = legend_text or getattr(caption_node, 'title', None)
-        if caption_text and caption_node is not None:
+        cap_text = self._join_text(getattr(caption_node, 'title', None), legend_text)
+        if cap_text:
             for child in tex_node.childNodes or ():
                 if child != caption_node:
-                    child.caption = caption_text
+                    child.caption = cap_text
                     break
         # clean up
         tex_doc.px_clear()
