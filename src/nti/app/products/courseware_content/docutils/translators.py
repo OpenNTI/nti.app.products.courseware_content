@@ -40,6 +40,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
             if not result and width and height:
                 rst_node['width'] = width
                 rst_node['height'] = height
+            return result
         return False
 
     def save_local(self, rst_node):
