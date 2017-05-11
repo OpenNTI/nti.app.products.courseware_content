@@ -60,6 +60,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         # XXX: in rst, a figure legend can be multiple paragraph
         # We  will interpret it as a caption
         # http://docutils.sourceforge.net/docs/ref/rst/directives.html#figure
+        all_text = []
         if caption is None:
             caption = tex_doc.createElement('caption')
             figure.append(caption)
@@ -68,29 +69,42 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
                 par = build_nodes(node, None, tex_doc=tex_doc)
                 for child in par.childNodes or ():
                     caption.append(child)
+                all_text.append(text_(node.astext()))
+        return u' '.join(all_text)
 
     def do_caption(self, rst_node, figure):
         # XXX: in rst, a figure caption is a single paragraph.
         # We  will interpret it as the caption title
         # http://docutils.sourceforge.net/docs/ref/rst/directives.html#figure
+        all_text = []
         tex_doc = figure.ownerDocument
         caption = tex_doc.createElement('caption')
         figure.append(caption)
         for node in rst_node.children or ():
             if node.tagname == '#text':
-                caption.title = text_(node.astext())
-                break
+                data = text_(node.astext())
+                all_text.append(data)
+        caption.title = u' '.join(all_text)
         return caption
 
     def do_depart(self, rst_node, tex_node, tex_doc):
         # Allow processing
         tex_doc.px_toggle_skip()
         # process children nodes
+        legend_text = None
         caption_node = None
         for node in tex_doc.px_store():
             if node.tagname == 'caption':
                 caption_node = self.do_caption(node, tex_node)
             elif node.tagname == 'legend':
-                self.do_legend(node, tex_node, caption_node, tex_doc)
+                legend_text = self.do_legend(node, tex_node, 
+                                             caption_node, tex_doc)
+        # set image caption
+        caption_text = legend_text or getattr(caption_node, 'title', None)
+        if caption_text and caption_node is not None:
+            for child in tex_node.childNodes or ():
+                if child != caption_node:
+                    child.caption = caption_text
+                    break
         # clean up
         tex_doc.px_clear()
