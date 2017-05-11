@@ -33,10 +33,13 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
     supported_local_types = ('image/jpeg', 'image/png')
 
     @classmethod
-    def is_supported_local_type(cls, asset):
+    def is_supported_local_type(cls, asset, rst_node):
         if hasattr(asset, 'data'):
-            content_type, _, _ = getImageInfo(asset.data)
-            return content_type in cls.supported_local_types
+            content_type, width, height = getImageInfo(asset.data)
+            result = content_type in cls.supported_local_types
+            if not result and width and height:
+                rst_node['width'] = width
+                rst_node['height'] = height
         return False
 
     def save_local(self, rst_node):
@@ -44,7 +47,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         asset = get_dataserver_asset(uri)
         if asset is None:
             raise ValueError("course asset is missing")
-        if self.is_supported_local_type(asset):
+        if self.is_supported_local_type(asset, rst_node):
             rst_node['uri'] = save_to_course_assets(asset)
         return rst_node
 
