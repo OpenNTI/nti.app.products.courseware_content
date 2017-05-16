@@ -28,7 +28,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 class TestTranslators(ApplicationLayerTest):
 
     def _ichigo_asset(self):
-        return os.path.join(os.path.dirname(__file__), 
+        return os.path.join(os.path.dirname(__file__),
                             'data/ichigo.png')
 
     def _generate_from_file(self, source):
@@ -63,7 +63,7 @@ class TestTranslators(ApplicationLayerTest):
                  'nti.app.products.courseware_content.docutils.translators.get_dataserver_asset')
     def test_figure(self, mock_isca, mock_gda):
         mock_isca.is_callable().with_args().returns(True)
-        
+
         asset = CourseContentFile()
         asset.name = asset.filename = 'ichigo.png'
         with open(self._ichigo_asset(), "rb") as fp:
@@ -75,4 +75,4 @@ class TestTranslators(ApplicationLayerTest):
         assert_that(index,
                     contains_string('<img alt="bankai inchigo"'))
         assert_that(index,
-                    contains_string('<div class="caption"><b>Figure bankai </b>: <span>Bankai second form</span>'))
+                    contains_string('<div class="caption"><b>Figure bankai </b><span>: </span><span>Bankai second form</span>'))

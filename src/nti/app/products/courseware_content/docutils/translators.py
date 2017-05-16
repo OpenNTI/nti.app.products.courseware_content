@@ -91,28 +91,27 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         caption.title = u' '.join(all_text)
         return caption
 
-    def _join_text(self, *args):
-        result = [a or u'' for a in args]
-        return u' '.join(result)
-            
     def do_depart(self, rst_node, tex_node, tex_doc):
         # Allow processing
         tex_doc.px_toggle_skip()
         # process children nodes
-        legend_text = None
         caption_node = None
         for node in tex_doc.px_store():
             if node.tagname == 'caption':
                 caption_node = self.do_caption(node, tex_node)
             elif node.tagname == 'legend':
-                legend_text = self.do_legend(node, tex_node, 
-                                             caption_node, tex_doc)
+                self.do_legend(node, tex_node,
+                               caption_node, tex_doc)
         # set image caption
-        cap_text = self._join_text(getattr(caption_node, 'title', None), legend_text)
-        if cap_text:
+        if caption_node is not None:
             for child in tex_node.childNodes or ():
                 if child != caption_node:
-                    child.caption = cap_text
+                    child.title = caption_node
+                    frag = tex_doc.createDocumentFragment()
+                    frag.parentNode = child
+                    frag.ownerDocument = tex_doc.ownerDocument
+                    frag.appendChild(caption_node)
+                    child.caption = frag
                     break
         # clean up
         tex_doc.px_clear()
