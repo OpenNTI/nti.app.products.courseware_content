@@ -47,8 +47,8 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         uri = rst_node['uri']
         asset = get_dataserver_asset(uri)
         if asset is None:
-            raise ValueError("course asset is missing")
-        if self.is_supported_local_type(asset, rst_node):
+            logger.error("%s course asset is missing", uri)
+        elif self.is_supported_local_type(asset, rst_node):
             rst_node['uri'] = save_to_course_assets(asset)
         return rst_node
 
