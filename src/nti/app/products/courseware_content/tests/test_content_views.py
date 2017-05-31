@@ -59,9 +59,9 @@ from nti.contenttypes.courses.interfaces import ICourseEnrollmentManager
 
 from nti.contenttypes.courses.utils import get_content_unit_courses
 
-from nti.dataserver.users import User
+from nti.dataserver.metadata.index import get_metadata_catalog
 
-from nti.metadata import dataserver_metadata_catalog
+from nti.dataserver.users import User
 
 from nti.externalization.externalization import StandardExternalFields
 
@@ -185,7 +185,7 @@ class TestContentViews(ApplicationLayerTest):
         Validate job count.
         """
         with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
-            catalog = dataserver_metadata_catalog()
+            catalog = get_metadata_catalog()
             query = {
                 'containerId': {'any_of':(package_ntiid,)},
                 'mimeType': {'any_of': (u'application/vnd.nextthought.content.packagerenderjob',)}
