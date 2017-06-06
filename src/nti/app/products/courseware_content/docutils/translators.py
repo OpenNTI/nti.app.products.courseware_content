@@ -11,6 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from docutils.nodes import Text
+from docutils.nodes import TextElement
+
 from plone.namedfile.file import getImageInfo
 
 from nti.base._compat import text_
@@ -85,7 +88,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         caption = tex_doc.createElement('caption')
         figure.append(caption)
         for node in rst_node.children or ():
-            if node.tagname == '#text':
+            if isinstance(node, (Text, TextElement)):
                 data = text_(node.astext())
                 all_text.append(data)
         caption.title = u' '.join(all_text)
