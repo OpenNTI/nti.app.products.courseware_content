@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -45,7 +45,7 @@ class TestTranslators(ApplicationLayerTest):
             # render
             document = render_document(source_doc,
                                        outfile_dir=tex_dir,
-                                       jobname="sample")
+                                       jobname=u"sample")
             index = os.path.join(tex_dir, 'index.html')
             assert_that(os.path.exists(index), is_(True))
             with open(index, "r") as fp:
@@ -65,7 +65,7 @@ class TestTranslators(ApplicationLayerTest):
         mock_isca.is_callable().with_args().returns(True)
 
         asset = CourseContentFile()
-        asset.name = asset.filename = 'ichigo.png'
+        asset.name = asset.filename = u'ichigo.png'
         with open(self._ichigo_asset(), "rb") as fp:
             asset.data = fp.read()
         mock_gda.is_callable().with_args().returns(asset)
