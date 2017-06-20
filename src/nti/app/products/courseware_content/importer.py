@@ -45,7 +45,7 @@ from nti.contentlibrary_rendering import RST_MIMETYPE
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseSectionImporter
-from nti.contenttypes.courses.interfaces import CourseBundleUpdatedEvent
+from nti.contenttypes.courses.interfaces import CourseBundleWillUpdateEvent
 
 from nti.contenttypes.courses.importer import BaseSectionImporter
 
@@ -159,7 +159,7 @@ class CourseContentPackagesImporter(BaseSectionImporter):
                 added.append(package)
 
         if added:
-            notify(CourseBundleUpdatedEvent(course, added_packages=added))
+            notify(CourseBundleWillUpdateEvent(course, added_packages=added))
         return added
 
     def process_source(self, course, source, check_locked=True, filer=None):

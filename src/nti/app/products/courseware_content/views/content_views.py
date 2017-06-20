@@ -18,7 +18,7 @@ from nti.app.contentlibrary.views.edit_views import LibraryPostView
 
 from nti.app.products.courseware_content.views import CourseLibraryPathAdapter
 
-from nti.contenttypes.courses.interfaces import CourseBundleUpdatedEvent
+from nti.contenttypes.courses.interfaces import CourseBundleWillUpdateEvent
 
 from nti.dataserver import authorization as nauth
 
@@ -50,5 +50,5 @@ class CourseLibraryPostView(LibraryPostView):
         bundle.updateLastMod()
         # Not sure we can guarantee this is a set...
         bundle.add(package)
-        notify(CourseBundleUpdatedEvent(course, (package,)))
+        notify(CourseBundleWillUpdateEvent(course, (package,)))
         return package
