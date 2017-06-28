@@ -49,7 +49,9 @@ class CourseContentPackagesExporter(BaseSectionExporter):
                                          decorate=False)
             if not backup:
                 for name in (NTIID, NTIID.lower(), OID):
-                    ext_obj.pop(name, None)
+                    ntiid = ext_obj.get(name)
+                    if ntiid:
+                        ext_obj[name] = self.hash_ntiid(ntiid, salt)
             result.append(ext_obj)
         return result
 
