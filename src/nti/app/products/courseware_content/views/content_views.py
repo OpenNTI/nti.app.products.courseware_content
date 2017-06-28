@@ -20,6 +20,8 @@ from nti.app.products.courseware_content.views import CourseLibraryPathAdapter
 
 from nti.contenttypes.courses.interfaces import CourseBundleWillUpdateEvent
 
+from nti.contenttypes.courses.utils import get_parent_course
+
 from nti.dataserver import authorization as nauth
 
 
@@ -50,5 +52,8 @@ class CourseLibraryPostView(LibraryPostView):
         bundle.updateLastMod()
         # Not sure we can guarantee this is a set...
         bundle.add(package)
-        notify(CourseBundleWillUpdateEvent(course, (package,)))
+        # Since the bundle is shared between all course hierarchy members,
+        # let's fire the event for the root course.
+        root_course = get_parent_course(course)
+        notify(CourseBundleWillUpdateEvent(root_course, (package,)))
         return package

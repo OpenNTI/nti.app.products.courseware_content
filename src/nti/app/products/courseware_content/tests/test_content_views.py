@@ -169,9 +169,10 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(package, not_none())
             assert_that(package.ntiid, is_(package_ntiid))
             courses = get_content_unit_courses(package)
-            assert_that(courses, has_length(1))
-            entry_ntiid = ICourseCatalogEntry(courses[0]).ntiid
-            assert_that(entry_ntiid, is_(self.entry_ntiid))
+            # All subinstances too
+            assert_that(courses, has_length(4))
+            entries = [ICourseCatalogEntry(x).ntiid for x in courses]
+            assert_that(entries, has_item(self.entry_ntiid))
             meta = IContentPackageRenderMetadata(package, None)
             assert_that(meta, not_none())
             assert_that(tuple(meta.values()), has_length(job_count))
@@ -218,8 +219,8 @@ class TestContentViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             course = find_object_with_ntiid(course_ntiid)
             key = course.root.getChildNamed('bundle_meta_info.json')
-            sync_bundle_from_json_key(key, 
-                                      course.ContentPackageBundle, 
+            sync_bundle_from_json_key(key,
+                                      course.ContentPackageBundle,
                                       excluded_keys=('ntiid',))
 
         sync_package_ntiids = self._get_course_package_ntiids(course_ntiid)
@@ -240,19 +241,19 @@ class TestContentViews(ApplicationLayerTest):
         self._create_and_enroll(u'student3_section', section=True)
         student1_environ = self._make_extra_environ(username='student1')
         student3_section_environ = self._make_extra_environ(username='student1')
-        
+
         publish_contents = self._get_rst_data('basic.rst')
         entry_href = '/dataserver2/Objects/%s' % self.entry_ntiid
         res = self.testapp.get(entry_href).json_body
         course_ntiid = res['CourseNTIID']
         course_href = '/dataserver2/Objects/%s' % course_ntiid
         res = self.testapp.get(course_href).json_body
-        library_href = self.require_link_href_with_rel(res, 
+        library_href = self.require_link_href_with_rel(res,
                                                        VIEW_COURSE_LIBRARY)
 
         def _get_package_ntiids(course_res=None, environ=admin_environ):
             if course_res is None:
-                course_res = self.testapp.get(course_href, 
+                course_res = self.testapp.get(course_href,
                                               extra_environ=environ)
                 course_res = course_res.json_body
             packages = course_res['ContentPackageBundle']['ContentPackages']
@@ -300,16 +301,16 @@ class TestContentViews(ApplicationLayerTest):
         self._test_page_info(new_package_ntiid, admin_environ, status=404)
         self._test_page_info(new_package_ntiid, student1_environ, status=403)
         self._test_page_info(new_package_ntiid, instructor_environ, status=403)
-        self._test_page_info(new_package_ntiid, 
-                             student3_section_environ, 
+        self._test_page_info(new_package_ntiid,
+                             student3_section_environ,
                              status=403)
         self._test_get_package(new_package_ntiid, admin_environ)
         self._test_get_package(new_package_ntiid, student1_environ, status=403)
-        self._test_get_package(new_package_ntiid, 
-                               instructor_environ, 
+        self._test_get_package(new_package_ntiid,
+                               instructor_environ,
                                status=403)
-        self._test_get_package(new_package_ntiid, 
-                               student3_section_environ, 
+        self._test_get_package(new_package_ntiid,
+                               student3_section_environ,
                                status=403)
 
         # Publish the package, which also renders in this case
@@ -324,7 +325,7 @@ class TestContentViews(ApplicationLayerTest):
         assert_that(job, not_none())
         assert_that(job['State'], is_(SUCCESS))
         self.require_link_href_with_rel(job, VIEW_QUERY_JOB)
-        unpublish_href = self.require_link_href_with_rel(published_package, 
+        unpublish_href = self.require_link_href_with_rel(published_package,
                                                          VIEW_UNPUBLISH)
         original_package_path = self._get_package_path(new_package_ntiid)
         self._validate_job_objects(published_package_ntiid, 1)
@@ -375,7 +376,7 @@ class TestContentViews(ApplicationLayerTest):
 
         # Now re-publish and the publish_contents rel is no longer necessary
         published_package = self.testapp.post(publish_href)
-        self.forbid_link_with_rel(published_package.json_body, 
+        self.forbid_link_with_rel(published_package.json_body,
                                   VIEW_PUBLISH_CONTENTS)
         self._check_package_state(published_package_ntiid, job_count=2)
         new_package_path = self._get_package_path(new_package_ntiid)
@@ -410,7 +411,7 @@ class TestContentViews(ApplicationLayerTest):
                                {'version': '0'},
                                upload_files=[('contents', 'contents.rst', bytes(conflict_contents))],
                                status=409)
-        force_href = self.require_link_href_with_rel(res.json_body, 
+        force_href = self.require_link_href_with_rel(res.json_body,
                                                      'overwrite')
         refresh_href = self.require_link_href_with_rel(res.json_body,
                                                        'refresh')
@@ -463,10 +464,10 @@ class TestContentViews(ApplicationLayerTest):
         self._test_get_package(new_package_ntiid, student1_environ, status=403)
         self._test_get_package(new_package_ntiid, student2_environ, status=403)
         self._test_get_package(new_package_ntiid,
-                               instructor_environ, 
+                               instructor_environ,
                                status=403)
         self._test_get_package(new_package_ntiid,
-                               student3_section_environ, 
+                               student3_section_environ,
                                status=403)
 
         # Validate sync does not mangle anything
