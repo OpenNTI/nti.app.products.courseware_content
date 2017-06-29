@@ -127,8 +127,13 @@ class CourseContentPackagesImporter(BaseSectionImporter):
                                })
         else:
             register_content_units(course, result)
-            result.ntiid = make_content_package_ntiid(result)
-            self.library.add(result, event=False)
+            # Use whatever NTIID we have....
+            ntiid = self.get_ntiid(result)
+            if ntiid is None:
+                result.ntiid = make_content_package_ntiid(result)
+            # This fires after course bundles, we need events to update
+            # reliant state.
+            self.library.add(result, event=True)
 
         is_published = source.get('isPublished')
         if is_published and (not check_locked or not result.is_locked()):
