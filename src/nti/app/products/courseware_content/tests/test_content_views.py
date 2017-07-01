@@ -433,10 +433,7 @@ class TestContentViews(ApplicationLayerTest):
         valid_version = res['version']
 
         # Unpublish our contents and access goes away
-        res = self.testapp.post(unpublish_href, status=409)
-        res = res.json_body
-        unpublish_href = self.require_link_href_with_rel(res, 'confirm')
-        self.testapp.post(unpublish_href)
+        self.testapp.post(unpublish_href, status=200)
 
         content_package_ntiids = _get_package_ntiids()
         assert_that(content_package_ntiids, has_length(2))
