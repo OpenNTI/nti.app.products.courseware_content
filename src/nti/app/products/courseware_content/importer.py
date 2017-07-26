@@ -65,6 +65,14 @@ from nti.recorder.utils import record_transaction
 ITEMS = StandardExternalFields.ITEMS
 
 
+try:
+    from nti.app.assessment.evaluations.importer import EvaluationsImporterMixin
+except ImportError:
+    class EvaluationsImporterMixin(object):
+        def handle_evaluation_items(self, items, context, check_locked, source_filer):
+            pass
+
+
 def copy_attributes(source, target, names):
     for name in names or ():
         value = getattr(source, name, None)
@@ -73,7 +81,7 @@ def copy_attributes(source, target, names):
 
 
 @interface.implementer(ICourseSectionImporter)
-class CourseContentPackagesImporter(BaseSectionImporter):
+class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporter):
 
     CONTENT_PACKAGE_INDEX = "content_pacakges.json"
 
@@ -91,7 +99,7 @@ class CourseContentPackagesImporter(BaseSectionImporter):
     def get_ntiid(self, obj):
         return getattr(obj, 'ntiid', None)
 
-    def is_new(self, obj, course=None):
+    def is_new(self, obj, unused_course=None):
         ntiid = self.get_ntiid(obj)
         if ntiid:
             return find_object_with_ntiid(ntiid)
@@ -142,7 +150,14 @@ class CourseContentPackagesImporter(BaseSectionImporter):
 
         locked = source.get('isLocked')
         if locked and (not check_locked or not result.is_locked()):
-            the_object.lock(event=False)
+            result.lock(event=False)
+        
+        # import evaluations
+        evaluations = source.get('Evaluations')
+        if evaluations:
+            items = evaluations[ITEMS]
+            self.handle_evaluation_items(items, result, False, filer)
+    
         # update indexes
         lifecycleevent.modified(result)
         return result, (stored is None)
