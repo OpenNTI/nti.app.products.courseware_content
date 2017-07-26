@@ -34,10 +34,18 @@ ITEMS = StandardExternalFields.ITEMS
 NTIID = StandardExternalFields.NTIID
 
 
-@interface.implementer(ICourseSectionExporter)
-class CourseContentPackagesExporter(BaseSectionExporter):
+try:
+    from nti.app.assessment.evaluations.exporter import EvaluationsExporterMixin
+except ImportError:
+    class EvaluationsExporterMixin(object):
+        def export_evaluations(self, context, filer, backup, salt):
+            pass
 
-    def _output(self, course, filer=None, backup=True, salt=None):
+
+@interface.implementer(ICourseSectionExporter)
+class CourseContentPackagesExporter(EvaluationsExporterMixin, BaseSectionExporter):
+
+    def _do_externalize(self, course, filer=None, backup=True, salt=None):
         result = []
         packages = get_course_content_packages(course)
         for package in packages:
@@ -53,16 +61,16 @@ class CourseContentPackagesExporter(BaseSectionExporter):
                     ntiid = ext_obj.get(name)
                     if ntiid:
                         ext_obj[name] = self.hash_ntiid(ntiid, salt)
+            evaluations = self.export_evaluations(package, filer, backup, salt)
+            if evaluations:
+                ext_obj['Evaluations'] = evaluations
             result.append(ext_obj)
         return result
 
     def externalize(self, context, filer=None, backup=True, salt=None):
         result = LocatedExternalDict()
         course = IContentCourseInstance(context)
-        items = self._output(course,
-                             filer=filer,
-                             backup=backup,
-                             salt=salt)
+        items = self._do_externalize(course, filer, backup, salt)
         if items:  # check
             result[ITEMS] = items
         return result
