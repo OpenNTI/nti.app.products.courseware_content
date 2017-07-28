@@ -69,7 +69,7 @@ try:
     from nti.app.assessment.evaluations.importer import EvaluationsImporterMixin
 except ImportError:
     class EvaluationsImporterMixin(object):
-        def handle_evaluation_items(self, items, context, check_locked, source_filer):
+        def handle_evaluation_items(self, items, context, source_filer):
             pass
 
 
@@ -111,8 +111,7 @@ class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporte
             e, unused = error
             raise e
 
-    def handle_package(self, the_object, source, course,
-                       check_locked=False, filer=None):
+    def handle_package(self, the_object, source, course, filer=None):
         result = the_object
         stored = self.is_new(the_object, course)
         if stored is not None:
@@ -144,25 +143,25 @@ class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporte
             self.library.add(result, event=True)
 
         is_published = source.get('isPublished')
-        if is_published and (not check_locked or not result.is_locked()):
+        if is_published:
             self.validate_content_package(result)
             result.publish()  # event trigger render job
 
         locked = source.get('isLocked')
-        if locked and (not check_locked or not result.is_locked()):
+        if locked:
             result.lock(event=False)
         
         # import evaluations
         evaluations = source.get('Evaluations')
         if evaluations:
             items = evaluations[ITEMS]
-            self.handle_evaluation_items(items, result, False, filer)
+            self.handle_evaluation_items(items, result, filer)
     
         # update indexes
         lifecycleevent.modified(result)
         return result, (stored is None)
 
-    def handle_packages(self, items, course, check_locked=False, filer=None):
+    def handle_packages(self, items, course, filer=None):
         added = []
         for ext_obj in items or ():
             source = copy.deepcopy(ext_obj)
@@ -170,11 +169,8 @@ class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporte
             the_object = factory()  # create object
             assert IEditableContentPackage.providedBy(the_object)
             update_from_external_object(the_object, ext_obj, notify=False)
-            package, is_new = self.handle_package(the_object,
-                                                  filer=filer,
-                                                  source=source,
-                                                  course=course,
-                                                  check_locked=check_locked)
+            package, is_new = self.handle_package(the_object, source,
+                                                  course, filer)
             if is_new:
                 added.append(package)
 
@@ -182,10 +178,10 @@ class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporte
             notify(CourseBundleWillUpdateEvent(course, added_packages=added))
         return added
 
-    def process_source(self, course, source, check_locked=True, filer=None):
+    def process_source(self, course, source, filer=None):
         source = self.load(source)
         items = source.get(ITEMS)
-        self.handle_packages(items, course, check_locked, filer)
+        self.handle_packages(items, course, filer)
 
     def do_import(self, course, filer, writeout=True):
         href = self.course_bucket_path(course) + self.CONTENT_PACKAGE_INDEX
