@@ -187,7 +187,7 @@ class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporte
         href = self.course_bucket_path(course) + self.CONTENT_PACKAGE_INDEX
         source = self.safe_get(filer, href)
         if source is not None:
-            self.process_source(course, source, False, filer)
+            self.process_source(course, source, filer)
             # save source
             if writeout and IFilesystemBucket.providedBy(course.root):
                 source = self.safe_get(filer, href)  # reload
