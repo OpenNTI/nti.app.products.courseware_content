@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import copy
 
 from zope import interface
 
@@ -27,7 +26,6 @@ from nti.cabinet.filer import transfer_to_native_file
 from nti.coremetadata.utils import current_principal
 
 from nti.contentlibrary.interfaces import IFilesystemBucket
-from nti.contentlibrary.interfaces import IEditableContentPackage
 
 from nti.contentlibrary.mixins import ContentPackageImporterMixin
 
@@ -40,9 +38,6 @@ from nti.contenttypes.courses.importer import BaseSectionImporter
 from nti.contenttypes.courses.utils import get_course_subinstances
 
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -61,18 +56,8 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
         return remoteUser
 
     def handle_packages(self, items, course, unused_filer=None):
-        added = []
-        for ext_obj in items or ():
-            source = copy.deepcopy(ext_obj)
-            factory = find_factory_for(ext_obj)
-            the_object = factory()  # create object
-            assert IEditableContentPackage.providedBy(the_object)
-            update_from_external_object(the_object, ext_obj, notify=False)
-            package, is_new = self.handle_package(the_object, source,
-                                                  course,)
-            if is_new:
-                added.append(package)
-
+        result = ContentPackageImporterMixin.handle_packages(items, course)
+        added, _ = result
         if added:
             notify(CourseBundleWillUpdateEvent(course, added_packages=added))
         return added
