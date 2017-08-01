@@ -9,11 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
 
 from nti.contentlibrary.interfaces import IEditableContentPackage
-from nti.contentlibrary.interfaces import IContentPackageExporterDecorator
+
+from nti.contentlibrary.utils import export_content_package
 
 from nti.contenttypes.courses.common import get_course_content_packages
 
@@ -23,8 +23,6 @@ from nti.contenttypes.courses.interfaces import IContentCourseInstance
 from nti.contenttypes.courses.exporter import BaseSectionExporter
 
 from nti.contenttypes.courses.utils import get_course_subinstances
-
-from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -46,9 +44,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
             package = removeAllProxies(package)
             if not IEditableContentPackage.providedBy(package):
                 continue
-            ext_obj = to_external_object(package,
-                                         name="exporter",
-                                         decorate=False)
+            ext_obj = export_content_package(package, backup, salt)
             if not backup:
                 ext_obj.pop(OID, None)
                 for name in (NTIID, NTIID.lower()):
@@ -56,9 +52,6 @@ class CourseContentPackagesExporter(BaseSectionExporter):
                     if not ntiid:
                         continue
                     ext_obj[name] = self.hash_ntiid(ntiid, salt)
-            for decorator in component.subscribers((package,), 
-                                                   IContentPackageExporterDecorator):
-                decorator.decorateExternalObject(package, ext_obj, backup, salt)
             result.append(ext_obj)
         return result
 
