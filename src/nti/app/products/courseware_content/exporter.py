@@ -68,7 +68,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
         result = self.externalize(course, filer, backup, salt)
         if result:  # check
             source = self.dump(result)
-            filer.save("content_pacakges.json", source, bucket=bucket,
+            filer.save("content_packages.json", source, bucket=bucket,
                        contentType="application/json", overwrite=True)
 
     def export(self, context, filer, backup=True, salt=None):

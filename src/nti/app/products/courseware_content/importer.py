@@ -46,7 +46,7 @@ ITEMS = StandardExternalFields.ITEMS
 class CourseContentPackagesImporter(ContentPackageImporterMixin, 
                                     BaseSectionImporter):
 
-    CONTENT_PACKAGE_INDEX = "content_pacakges.json"
+    CONTENT_PACKAGE_INDEX = "content_packages.json"
 
     @Lazy
     def current_principal(self):
