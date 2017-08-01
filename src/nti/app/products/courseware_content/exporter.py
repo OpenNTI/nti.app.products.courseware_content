@@ -9,9 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from nti.contentlibrary.interfaces import IEditableContentPackage
+from nti.contentlibrary.interfaces import IContentPackageExporterDecorator
 
 from nti.contenttypes.courses.common import get_course_content_packages
 
@@ -34,18 +36,10 @@ ITEMS = StandardExternalFields.ITEMS
 NTIID = StandardExternalFields.NTIID
 
 
-try:
-    from nti.app.assessment.evaluations.exporter import EvaluationsExporterMixin
-except ImportError:
-    class EvaluationsExporterMixin(object):
-        def export_evaluations(self, context, filer, backup, salt):
-            pass
-
-
 @interface.implementer(ICourseSectionExporter)
-class CourseContentPackagesExporter(EvaluationsExporterMixin, BaseSectionExporter):
+class CourseContentPackagesExporter(BaseSectionExporter):
 
-    def _do_externalize(self, course, filer=None, backup=True, salt=None):
+    def _do_externalize(self, course, unused_filer=None, backup=True, salt=None):
         result = []
         packages = get_course_content_packages(course)
         for package in packages:
@@ -59,11 +53,12 @@ class CourseContentPackagesExporter(EvaluationsExporterMixin, BaseSectionExporte
                 ext_obj.pop(OID, None)
                 for name in (NTIID, NTIID.lower()):
                     ntiid = ext_obj.get(name)
-                    if ntiid:
-                        ext_obj[name] = self.hash_ntiid(ntiid, salt)
-            evaluations = self.export_evaluations(package, filer, backup, salt)
-            if evaluations:
-                ext_obj['Evaluations'] = evaluations
+                    if not ntiid:
+                        continue
+                    ext_obj[name] = self.hash_ntiid(ntiid, salt)
+            for decorator in component.subscribers((package,), 
+                                                   IContentPackageExporterDecorator):
+                decorator.decorateExternalObject(package, ext_obj, backup, salt)
             result.append(ext_obj)
         return result
 
