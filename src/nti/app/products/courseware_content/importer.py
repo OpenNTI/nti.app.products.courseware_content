@@ -34,6 +34,7 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IFilesystemBucket
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IEditableContentPackage
+from nti.contentlibrary.interfaces import IContentPackageImporterUpdater
 
 from nti.contentlibrary.library import register_content_units
 
@@ -65,14 +66,6 @@ from nti.recorder.utils import record_transaction
 ITEMS = StandardExternalFields.ITEMS
 
 
-try:
-    from nti.app.assessment.evaluations.importer import EvaluationsImporterMixin
-except ImportError:
-    class EvaluationsImporterMixin(object):
-        def handle_evaluation_items(self, items, context, source_filer):
-            pass
-
-
 def copy_attributes(source, target, names):
     for name in names or ():
         value = getattr(source, name, None)
@@ -81,7 +74,7 @@ def copy_attributes(source, target, names):
 
 
 @interface.implementer(ICourseSectionImporter)
-class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporter):
+class CourseContentPackagesImporter(BaseSectionImporter):
 
     CONTENT_PACKAGE_INDEX = "content_pacakges.json"
 
@@ -150,13 +143,10 @@ class CourseContentPackagesImporter(EvaluationsImporterMixin, BaseSectionImporte
         locked = source.get('isLocked')
         if locked:
             result.lock(event=False)
-        
-        # import evaluations
-        evaluations = source.get('Evaluations')
-        if evaluations:
-            items = evaluations[ITEMS]
-            self.handle_evaluation_items(items, result, filer)
-    
+        # update from subscribers
+        for updater in component.subscribers((result,), 
+                                             IContentPackageImporterUpdater):
+            updater.updateFromExternalObject(result, source)
         # update indexes
         lifecycleevent.modified(result)
         return result, (stored is None)
