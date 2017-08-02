@@ -56,7 +56,7 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
         return remoteUser
 
     def handle_packages(self, items, course, unused_filer=None):
-        result = ContentPackageImporterMixin.handle_packages(items, course)
+        result = ContentPackageImporterMixin.handle_packages(self, items, course)
         added, _ = result
         if added:
             notify(CourseBundleWillUpdateEvent(course, added_packages=added))
