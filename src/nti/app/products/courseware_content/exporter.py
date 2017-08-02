@@ -29,9 +29,7 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.proxy import removeAllProxies
 
-OID = StandardExternalFields.OID
 ITEMS = StandardExternalFields.ITEMS
-NTIID = StandardExternalFields.NTIID
 
 
 @interface.implementer(ICourseSectionExporter)
@@ -45,13 +43,6 @@ class CourseContentPackagesExporter(BaseSectionExporter):
             if not IEditableContentPackage.providedBy(package):
                 continue
             ext_obj = export_content_package(package, backup, salt)
-            if not backup:
-                ext_obj.pop(OID, None)
-                for name in (NTIID, NTIID.lower()):
-                    ntiid = ext_obj.get(name)
-                    if not ntiid:
-                        continue
-                    ext_obj[name] = self.hash_ntiid(ntiid, salt)
             result.append(ext_obj)
         return result
 
