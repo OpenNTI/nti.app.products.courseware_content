@@ -35,7 +35,7 @@ ITEMS = StandardExternalFields.ITEMS
 @interface.implementer(ICourseSectionExporter)
 class CourseContentPackagesExporter(BaseSectionExporter):
 
-    def _do_externalize(self, course, unused_filer=None, backup=True, salt=None):
+    def _do_externalize(self, course, backup=True, salt=None, unused_filer=None):
         result = []
         packages = get_course_content_packages(course)
         for package in packages:
@@ -49,7 +49,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
     def externalize(self, context, filer=None, backup=True, salt=None):
         result = LocatedExternalDict()
         course = IContentCourseInstance(context)
-        items = self._do_externalize(course, filer, backup, salt)
+        items = self._do_externalize(course, backup, salt, filer)
         if items:  # check
             result[ITEMS] = items
         return result
