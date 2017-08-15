@@ -35,14 +35,14 @@ ITEMS = StandardExternalFields.ITEMS
 @interface.implementer(ICourseSectionExporter)
 class CourseContentPackagesExporter(BaseSectionExporter):
 
-    def _do_externalize(self, course, backup=True, salt=None, unused_filer=None):
+    def _do_externalize(self, course, backup=True, salt=None, filer=None):
         result = []
         packages = get_course_content_packages(course)
         for package in packages:
             package = removeAllProxies(package)
             if not IEditableContentPackage.providedBy(package):
                 continue
-            ext_obj = export_content_package(package, backup, salt)
+            ext_obj = export_content_package(package, backup, salt, filer)
             result.append(ext_obj)
         return result
 
