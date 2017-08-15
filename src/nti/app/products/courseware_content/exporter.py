@@ -55,7 +55,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
         return result
 
     def do_export(self, course, filer, backup=True, salt=None):
-        bucket = self.course_bucket(course)
+        filer.default_bucket = bucket = self.course_bucket(course)
         result = self.externalize(course, filer, backup, salt)
         if result:  # check
             source = self.dump(result)
