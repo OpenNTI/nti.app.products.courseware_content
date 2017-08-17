@@ -23,11 +23,7 @@ from nti.contenttypes.courses.common import get_course_packages
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-from nti.site.hostpolicy import get_host_site
-
 from nti.site.interfaces import IHostPolicyFolder
-
-from nti.traversal.traversal import find_interface
 
 
 def _get_library(context):
@@ -37,8 +33,8 @@ def _get_library(context):
     else:
         # If context is given, attempt to use the site the given context
         # is stored in. This is necessary to avoid data loss during sync.
-        folder = find_interface(context, IHostPolicyFolder, strict=False)
-        with current_site(get_host_site(folder.__name__)):
+        folder = IHostPolicyFolder(context)
+        with current_site(folder):
             library = component.queryUtility(IContentPackageLibrary)
     return library
 
@@ -62,5 +58,3 @@ def _clear_course_packages(course, unused_event):
                 count,
                 ICourseCatalogEntry(course).ntiid,
                 len(packages))
-
-
