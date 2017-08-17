@@ -43,7 +43,7 @@ ITEMS = StandardExternalFields.ITEMS
 
 
 @interface.implementer(ICourseSectionImporter)
-class CourseContentPackagesImporter(ContentPackageImporterMixin, 
+class CourseContentPackagesImporter(ContentPackageImporterMixin,
                                     BaseSectionImporter):
 
     CONTENT_PACKAGE_INDEX = "content_packages.json"

@@ -24,14 +24,16 @@
 					 pyramid.interfaces.IRequest" />
 
 	<!-- Exporter -->
-	<utility factory=".exporter.CourseContentPackagesExporter" 
+	<utility factory=".exporter.CourseContentPackagesExporter"
 			 name="018:ContentPackages" />
-	
+
 	<!-- Importer -->
-	<utility factory=".importer.CourseContentPackagesImporter" 
+	<utility factory=".importer.CourseContentPackagesImporter"
 			 name="018:ContentPackages" />
-			 
+
 	<!-- Directives / Roles -->
 	<include package=".docutils" />
-	
+
+	<subscriber handler=".subscribers._clear_course_packages" />
+
 </configure>
