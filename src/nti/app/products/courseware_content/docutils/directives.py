@@ -60,7 +60,7 @@ class CourseFigure(Figure):
         node_attributes.update(figure_node.attributes)
 
         # creates the course asset, don't include the image node
-        result = course_figure('',
+        result = course_figure(self.block_text,
                                *fig_children[1:],
                                **node_attributes)
         result['uri'] = reference

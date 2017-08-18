@@ -55,7 +55,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
             rst_node['uri'] = save_to_course_assets(asset)
         return rst_node
 
-    def do_translate(self, rst_node, tex_doc, tex_parent):
+    def do_translate(self, rst_node, tex_doc, unused_tex_parent):
         if rst_node['local']:
             self.save_local(rst_node)
         # start pushing the rst_nodes
@@ -94,7 +94,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         caption.title = u' '.join(all_text)
         return caption
 
-    def do_depart(self, rst_node, tex_node, tex_doc):
+    def do_depart(self, unused_rst_node, tex_node, tex_doc):
         # Allow processing
         tex_doc.px_toggle_skip()
         # process children nodes

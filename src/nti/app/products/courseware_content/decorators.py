@@ -48,7 +48,7 @@ class _CourseLibraryLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
     Provide a course `Library` rel to editors.
     """
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         return  self._is_authenticated \
             and not ILegacyCourseInstance.providedBy(context) \
             and has_permission(ACT_CONTENT_EDIT, context, self.request)
@@ -71,7 +71,7 @@ class _CourseContentPackageBundleDecorator(AbstractAuthenticatedRequestAwareDeco
     Suppress packcages w/o acesss
     """
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         return  self._is_authenticated \
             and not ILegacyCourseInstance.providedBy(context) \
             and has_permission(ACT_READ, context, self.request)
