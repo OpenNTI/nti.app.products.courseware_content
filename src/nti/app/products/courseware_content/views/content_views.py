@@ -11,13 +11,19 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.event import notify
 
+from zope.cachedescriptors.property import Lazy
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+
+from nti.app.contentlibrary.views import LIBRARY_ADAPTER
 
 from nti.app.contentlibrary.views.edit_views import LibraryPostView
 
 from nti.app.products.courseware_content.views import CourseLibraryPathAdapter
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.courses.interfaces import CourseBundleWillUpdateEvent
 
 from nti.contenttypes.courses.utils import get_parent_course
@@ -36,15 +42,19 @@ class CourseLibraryPostView(LibraryPostView):
     after first placing it in the site :class:`IContentPackageLibrary`.
     """
 
+    @Lazy
+    def course(self):
+        return self.context.course
+
     def get_library(self):
         """
         Override to install the new content in the course site library.
         """
-        course = self.context.course
-        return super(CourseLibraryPostView, self).get_library( context=course )
+        course = self.course
+        return super(CourseLibraryPostView, self).get_library(context=course)
 
     def _do_call(self):
-        course = self.context.course
+        course = self.course
         package = super(CourseLibraryPostView, self)._do_call()
         # Now we should have our package in our library, store it on our
         # course and fire events.
@@ -57,3 +67,16 @@ class CourseLibraryPostView(LibraryPostView):
         root_course = get_parent_course(course)
         notify(CourseBundleWillUpdateEvent(root_course, (package,)))
         return package
+
+
+@view_config(context=ICourseCatalogEntry)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               name=LIBRARY_ADAPTER,
+               request_method='POST',
+               permission=nauth.ACT_CONTENT_EDIT)
+class CatalogEntryLibraryPostView(CourseLibraryPostView):
+
+    @Lazy
+    def course(self):
+        return ICourseInstance(self.context)
