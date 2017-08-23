@@ -9,6 +9,7 @@
 	<include package="zope.security" />
 
 	<include package="nti.contentlibrary" />
+	<include package="nti.contenttypes.courses" />
 
 	<include package=".views" />
 
