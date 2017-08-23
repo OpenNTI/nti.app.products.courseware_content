@@ -11,17 +11,17 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.container.contained import Contained
+from zope.location.interfaces import IContained
 
 from zope.traversing.interfaces import IPathAdapter
 
 from nti.app.products.courseware_content import VIEW_COURSE_LIBRARY
 
 
-@interface.implementer(IPathAdapter)
-class CourseLibraryPathAdapter(Contained):
+@interface.implementer(IPathAdapter, IContained)
+class CourseLibraryPathAdapter(object):
 
-    __name__ = 'Library'
+    __name__ = VIEW_COURSE_LIBRARY
 
     def __init__(self, context):
         self.context = self.__parent__ = self.course = context
