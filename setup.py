@@ -25,7 +25,7 @@ def _read(fname):
 
 setup(
     name='nti.app.products.courseware_content',
-    version=VERSION,
+    version=_read('version.txt').strip(),
     author='Jason Madden',
     author_email='jason@nextthought.com',
     description="Umbrella product to support integrated courseware and content",
@@ -49,7 +49,7 @@ setup(
     namespace_packages=['nti', 'nti.app', 'nti.app.products'],
     tests_require=TESTS_REQUIRE,
     install_requires=[
-		'setuptools',
+        'setuptools',
         'nti.contentlibrary',
         'nti.contenttypes.courses',
     ],
