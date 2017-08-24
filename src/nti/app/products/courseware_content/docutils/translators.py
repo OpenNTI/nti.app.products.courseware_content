@@ -15,10 +15,13 @@ from docutils.nodes import Text
 from docutils.nodes import TextElement
 
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
+from nti.app.contentlibrary_rendering.docutils.utils import is_dataserver_asset
 from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
 from nti.app.contentlibrary_rendering.docutils.utils import save_to_course_assets
 
 from nti.base._compat import text_
+
+from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentlibrary_rendering.docutils.translators import build_nodes
 from nti.contentlibrary_rendering.docutils.translators import TranslatorMixin
@@ -46,6 +49,13 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
             return result
         return False
 
+    def associate(self, uri, tex_doc):
+        context = tex_doc.px_context()
+        if context is not None:
+            asset = get_dataserver_asset(uri)
+            if IContentBaseFile.providedBy(asset):
+                asset.add_association(context)
+        
     def save_local(self, rst_node):
         uri = rst_node['uri']
         asset = get_dataserver_asset(uri)
@@ -60,7 +70,10 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
             self.save_local(rst_node)
         # start pushing the rst_nodes
         tex_doc.px_toggle_skip()
-        result, _ = process_rst_figure(rst_node, tex_doc)
+        result, grphx = process_rst_figure(rst_node, tex_doc)
+        url = grphx.getAttribute('url')
+        if url and is_dataserver_asset(url):
+            self.associate(url, tex_doc)
         return result
 
     def do_legend(self, rst_node, figure, caption, tex_doc):
