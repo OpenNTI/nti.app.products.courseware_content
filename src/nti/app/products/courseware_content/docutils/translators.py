@@ -14,18 +14,18 @@ from zope import interface
 from docutils.nodes import Text
 from docutils.nodes import TextElement
 
-from plone.namedfile.file import getImageInfo
-
-from nti.base._compat import text_
-
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
 from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
 from nti.app.contentlibrary_rendering.docutils.utils import save_to_course_assets
+
+from nti.base._compat import text_
 
 from nti.contentlibrary_rendering.docutils.translators import build_nodes
 from nti.contentlibrary_rendering.docutils.translators import TranslatorMixin
 
 from nti.contentlibrary_rendering.docutils.interfaces import IRSTToPlastexNodeTranslator
+
+from nti.namedfile.utils import getImageInfo
 
 
 @interface.implementer(IRSTToPlastexNodeTranslator)
