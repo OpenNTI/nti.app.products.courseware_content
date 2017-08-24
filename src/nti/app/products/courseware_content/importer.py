@@ -21,6 +21,8 @@ from zope.security.interfaces import IPrincipal
 
 from nti.app.authentication import get_remote_user
 
+from nti.app.products.courseware.resources.utils import get_course_filer
+
 from nti.cabinet.filer import transfer_to_native_file
 
 from nti.coremetadata.utils import current_principal
@@ -55,27 +57,29 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
             remoteUser = current_principal()
         return remoteUser
 
-    def handle_packages(self, items, course, filer=None):
+    def handle_packages(self, items, course, source_filer=None, target_filer=None):
         result = ContentPackageImporterMixin.handle_packages(self, items, course, 
-                                                             filer=filer)
+                                                             source_filer=source_filer,
+                                                             target_filer=target_filer)
         added, _ = result
         if added:
             notify(CourseBundleWillUpdateEvent(course, added_packages=added))
         return added
 
-    def process_source(self, course, source, filer=None):
+    def process_source(self, course, source, source_filer=None, target_filer=None):
         source = self.load(source)
         items = source.get(ITEMS)
-        self.handle_packages(items, course, filer)
+        self.handle_packages(items, course, source_filer, target_filer)
 
-    def do_import(self, course, filer, writeout=True):
+    def do_import(self, course, source_filer, writeout=True):
         href = self.course_bucket_path(course) + self.CONTENT_PACKAGE_INDEX
-        source = self.safe_get(filer, href)
+        source = self.safe_get(source_filer, href)
         if source is not None:
-            self.process_source(course, source, filer)
+            target_filer = get_course_filer(course)
+            self.process_source(course, source, source_filer, target_filer)
             # save source
             if writeout and IFilesystemBucket.providedBy(course.root):
-                source = self.safe_get(filer, href)  # reload
+                source = self.safe_get(source_filer, href)  # reload
                 self.makedirs(course.root.absolute_path)  # create
                 new_path = os.path.join(course.root.absolute_path,
                                         self.CONTENT_PACKAGE_INDEX)
