@@ -4,13 +4,19 @@
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
-	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	<include package="zope.security" />
 
 	<module module=".directives" />
 
 	<utility factory=".translators.CourseFigureToPlastexNodeTranslator" 
 			 name="course_figure" />
+
+	<!-- Import / Export -->
+	<subscriber	factory=".operators.RenderablePackageContentOperator"
+				provides="nti.contentlibrary.interfaces.IContentOperator" />
+				
+	<subscriber factory=".operators.RenderableContentPackageImporterUpdater"
+				provides="nti.contentlibrary.interfaces.IContentPackageImporterUpdater"
+				for="nti.contentlibrary.interfaces.IRenderableContentPackage" />
 
 </configure>
