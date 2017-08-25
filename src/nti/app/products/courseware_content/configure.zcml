@@ -26,11 +26,11 @@
 
 	<!-- Exporter -->
 	<utility factory=".exporter.CourseContentPackagesExporter"
-			 name="018:ContentPackages" />
+			 name="014:ContentPackages" />
 
 	<!-- Importer -->
 	<utility factory=".importer.CourseContentPackagesImporter"
-			 name="018:ContentPackages" />
+			 name="014:ContentPackages" />
 
 	<!-- Directives / Roles -->
 	<include package=".docutils" />
