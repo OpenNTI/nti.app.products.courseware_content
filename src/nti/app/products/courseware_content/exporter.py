@@ -9,9 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
+from zope import component
 from zope import interface
 
+from nti.app.products.courseware.resources.utils import is_internal_file_link
+
+from nti.app.products.courseware.utils.exporter import save_resource_to_filer
+
 from nti.contentlibrary.interfaces import IEditableContentPackage
+from nti.contentlibrary.interfaces import IContentPackageExporterDecorator
 
 from nti.contentlibrary.utils import export_content_package
 
@@ -70,3 +78,20 @@ class CourseContentPackagesExporter(BaseSectionExporter):
         for instance in get_course_subinstances(course):
             if course.ContentPackageBundle is not instance.ContentPackageBundle:
                 self.do_export(instance, filer, backup, salt)
+
+
+@component.adapter(IEditableContentPackage)
+@interface.implementer(IContentPackageExporterDecorator)
+class EditableContentPackageExporterDecorator(object):
+
+    __slots__ = ()
+
+    def __init__(self, *args):
+        pass
+
+    def decorateExternalObject(self, package, external, unused_backup=True,
+                               unused_salt=None, filer=None):
+        icon = package.icon
+        if isinstance(icon, six.string_types) and is_internal_file_link(icon):
+            href = save_resource_to_filer(icon, filer, True, package)
+            external['icon'] = href
