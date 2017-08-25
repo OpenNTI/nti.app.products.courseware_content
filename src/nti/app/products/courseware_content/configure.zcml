@@ -28,9 +28,17 @@
 	<utility factory=".exporter.CourseContentPackagesExporter"
 			 name="014:ContentPackages" />
 
+	<subscriber factory=".exporter.EditableContentPackageExporterDecorator"
+				provides="nti.contentlibrary.interfaces.IContentPackageExporterDecorator"
+				for="nti.contentlibrary.interfaces.IEditableContentPackage" />
+
 	<!-- Importer -->
 	<utility factory=".importer.CourseContentPackagesImporter"
 			 name="014:ContentPackages" />
+
+	<subscriber factory=".importer.EditableContentPackageImporterUpdater"
+				provides="nti.contentlibrary.interfaces.IContentPackageImporterUpdater"
+				for="nti.contentlibrary.interfaces.IEditableContentPackage" />
 
 	<!-- Directives / Roles -->
 	<include package=".docutils" />

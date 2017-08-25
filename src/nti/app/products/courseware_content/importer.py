@@ -10,7 +10,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import six
 
+from zope import component
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
@@ -23,13 +25,19 @@ from nti.app.authentication import get_remote_user
 
 from nti.app.products.courseware.resources.utils import get_course_filer
 
+from nti.app.products.courseware.utils import transfer_resource_from_filer
+
 from nti.cabinet.filer import transfer_to_native_file
 
 from nti.coremetadata.utils import current_principal
 
 from nti.contentlibrary.interfaces import IFilesystemBucket
+from nti.contentlibrary.interfaces import IEditableContentPackage
+from nti.contentlibrary.interfaces import IContentPackageImporterUpdater
 
 from nti.contentlibrary.mixins import ContentPackageImporterMixin
+
+from nti.contenttypes.courses.interfaces import NTI_COURSE_FILE_SCHEME
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseSectionImporter
@@ -93,3 +101,24 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
         for subinstance in get_course_subinstances(course):
             result = self.do_import(subinstance, filer, writeout) or result
         return result
+    
+
+@component.adapter(IEditableContentPackage)
+@interface.implementer(IContentPackageImporterUpdater)
+class EditableContentPackageImporterUpdater(object):
+
+    __slots__ = ()
+
+    def __init__(self, *args):
+        pass
+
+    def updateFromExternalObject(self, package, external, *unused_args, **kwargs):
+        icon = external.get('icon')
+        source_filer = kwargs.get('source_filer')
+        target_filer = kwargs.get('target_filer')
+        if      isinstance(icon, six.string_types) \
+            and icon.startswith(NTI_COURSE_FILE_SCHEME) \
+            and source_filer is not None and target_filer is not None:
+            href, unused = transfer_resource_from_filer(icon, package,
+                                                        source_filer, target_filer)
+            package.icon = href
