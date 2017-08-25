@@ -91,7 +91,7 @@ class RenderablePackageContentOperator(OperatorMixin):
 
 @component.adapter(IRenderableContentPackage)
 @interface.implementer(IContentPackageImporterUpdater)
-class _RenderableContentPackageImporterUpdater(OperatorMixin):
+class RenderableContentPackageImporterUpdater(OperatorMixin):
 
     def _process(self, package, line, result, source_filer, target_filer):
         modified = False
@@ -103,6 +103,7 @@ class _RenderableContentPackageImporterUpdater(OperatorMixin):
                                                             source_filer, target_filer)
                 if href:
                     line = re.sub(reference, href, line)
+                    modified = True
         result.append(line)
         return modified
 
@@ -119,7 +120,7 @@ class _RenderableContentPackageImporterUpdater(OperatorMixin):
             content = u'\n'.join(result)
             package.contents = bytes_(content)
 
-    def updateFromExternalObject(self, package, unused_external, *unused_args, **kwargs):
+    def updateFromExternalObject(self, package, unused_external=None, *unused_args, **kwargs):
         source_filer = kwargs.get('source_filer')
         target_filer = kwargs.get('target_filer')
         if source_filer is not None and target_filer is not None:
