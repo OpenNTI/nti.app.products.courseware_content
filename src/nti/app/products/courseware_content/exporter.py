@@ -38,6 +38,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.proxy import removeAllProxies
 
 ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 
 @interface.implementer(ICourseSectionExporter)
@@ -60,6 +62,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
         items = self._do_externalize(course, backup, salt, filer)
         if items:  # check
             result[ITEMS] = items
+            result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
 
     def do_export(self, course, filer, backup=True, salt=None):
