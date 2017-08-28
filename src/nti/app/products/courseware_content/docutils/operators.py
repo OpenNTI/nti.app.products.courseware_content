@@ -57,8 +57,10 @@ class RenderablePackageContentOperator(OperatorMixin):
             reference = m.groups()[0]
             if is_internal_file_link(reference):
                 internal = save_resource_to_filer(reference, filer)
-                line = re.sub(reference, internal, line)
-                modified = True
+                __traceback_info__ = reference, internal
+                if internal:
+                    line = re.sub(reference, internal, line)
+                    modified = True
         result.append(line)
         return modified
 
