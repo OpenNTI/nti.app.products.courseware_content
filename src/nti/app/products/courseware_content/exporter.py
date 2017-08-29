@@ -95,6 +95,8 @@ class EditableContentPackageExporterDecorator(object):
     def decorateExternalObject(self, package, external, unused_backup=True,
                                unused_salt=None, filer=None):
         icon = package.icon
-        if isinstance(icon, six.string_types) and is_internal_file_link(icon):
+        if      filer is not None \
+            and isinstance(icon, six.string_types) \
+            and is_internal_file_link(icon):
             href = save_resource_to_filer(icon, filer, True, package)
             external['icon'] = href
