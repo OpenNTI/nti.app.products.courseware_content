@@ -17,6 +17,8 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import site as current_site
+
 from zope.event import notify
 
 from zope.security.interfaces import IPrincipal
@@ -49,6 +51,8 @@ from nti.contenttypes.courses.utils import get_course_subinstances
 
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.site.interfaces import IHostPolicyFolder
+
 ITEMS = StandardExternalFields.ITEMS
 
 
@@ -77,7 +81,9 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
     def process_source(self, course, source, source_filer=None, target_filer=None):
         source = self.load(source)
         items = source.get(ITEMS)
-        self.handle_packages(items, course, source_filer, target_filer)
+        # want to make sure pkgs are registered in the course site
+        with current_site(IHostPolicyFolder(course)):
+            self.handle_packages(items, course, source_filer, target_filer)
 
     def do_import(self, course, source_filer, writeout=True):
         href = self.course_bucket_path(course) + self.CONTENT_PACKAGE_INDEX
