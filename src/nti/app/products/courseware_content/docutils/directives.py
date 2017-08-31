@@ -23,6 +23,8 @@ from nti.app.products.courseware_content.docutils.nodes import course_figure
 
 from nti.common.string import is_true
 
+from nti.contenttypes.courses.interfaces import NTI_COURSE_FILE_SCHEME
+
 
 def true_value(argument):
     return is_true(argument)
@@ -34,9 +36,13 @@ class CourseFigure(Figure):
     option_spec.pop('target', None)
     option_spec['local'] = true_value
 
+    def _is_valid_reference(self, reference):
+        return is_dataserver_asset(reference) \
+            or reference.startswith(NTI_COURSE_FILE_SCHEME)
+
     def run(self):
         reference = directives.uri(self.arguments[0])
-        if not reference or not is_dataserver_asset(reference):
+        if not reference or not self._is_valid_reference(reference):
             raise self.error(
                 'Error in "%s" directive: "%s" is not a valid href value for '
                 'a course asset.' % (self.name, reference))
@@ -70,6 +76,8 @@ class CourseFigure(Figure):
 
 def register_directives():
     directives.register_directive("course-figure", CourseFigure)
+
+
 register_directives()
 
 from nti.contentlibrary_rendering.docutils.interfaces import IDirectivesModule
