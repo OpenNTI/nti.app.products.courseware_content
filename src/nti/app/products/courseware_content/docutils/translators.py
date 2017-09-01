@@ -15,9 +15,10 @@ from docutils.nodes import Text
 from docutils.nodes import TextElement
 
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
-from nti.app.contentlibrary_rendering.docutils.utils import is_dataserver_asset
-from nti.app.contentlibrary_rendering.docutils.utils import get_dataserver_asset
 from nti.app.contentlibrary_rendering.docutils.utils import save_to_course_assets
+
+from nti.app.contentlibrary_rendering.utils import is_dataserver_asset
+from nti.app.contentlibrary_rendering.utils import get_dataserver_asset
 
 from nti.base._compat import text_
 
