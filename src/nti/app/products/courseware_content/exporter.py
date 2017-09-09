@@ -14,7 +14,7 @@ import six
 from zope import component
 from zope import interface
 
-from nti.app.products.courseware.resources.utils import is_internal_file_link
+from nti.app.contentfolder.resources import is_internal_file_link
 
 from nti.app.products.courseware.utils.exporter import save_resource_to_filer
 

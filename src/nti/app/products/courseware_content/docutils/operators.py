@@ -18,7 +18,7 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
-from nti.app.products.courseware.resources.utils import is_internal_file_link
+from nti.app.contentfolder.resources import is_internal_file_link
 
 from nti.app.products.courseware.utils import transfer_resource_from_filer
 
