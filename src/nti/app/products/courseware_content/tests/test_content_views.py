@@ -89,7 +89,7 @@ class TestContentViews(ApplicationLayerTest):
 
     layer = PersistentInstructedCourseApplicationTestLayer
 
-    default_origin = 'http://janux.ou.edu'
+    default_origin = 'http://platform.ou.edu'
 
     entry_ntiid = u'tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323'
     package_ntiid = u'tag:nextthought.com,2011-10:OU-HTML-CS1323_F_2015_Intro_to_Computer_Programming.introduction_to_computer_programming'
@@ -122,7 +122,7 @@ class TestContentViews(ApplicationLayerTest):
         Create user and enroll.
         """
         self.create_user(username)
-        with mock_dataserver.mock_db_trans(self.ds, site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(self.ds, site_name='platform.ou.edu'):
             new_user = User.get_user(username)
             course = find_object_with_ntiid(self.entry_ntiid)
             course = ICourseInstance(course)
@@ -163,7 +163,7 @@ class TestContentViews(ApplicationLayerTest):
         the library has the package details and that the job status
         is correct.
         """
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             package = library.contentUnitsByNTIID.get(package_ntiid)
             assert_that(package, not_none())
@@ -178,7 +178,7 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(tuple(meta.values()), has_length(job_count))
 
     def _get_package_path(self, package_ntiid):
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             package = find_object_with_ntiid(package_ntiid)
             return package.root.absolute_path
 
@@ -186,7 +186,7 @@ class TestContentViews(ApplicationLayerTest):
         """
         Validate job count.
         """
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             catalog = get_metadata_catalog()
             query = {
                 'containerId': {'any_of': (package_ntiid,)},
@@ -196,7 +196,7 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(list(initds), has_length(job_count))
 
     def _get_library_packages(self):
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             library = component.getUtility(IContentPackageLibrary)
             result = [x.ntiid for x in library.contentPackages]
             return result
@@ -208,7 +208,7 @@ class TestContentViews(ApplicationLayerTest):
             return library.syncContentPackages()
 
     def _get_course_package_ntiids(self, course_ntiid):
-        with mock_dataserver.mock_db_trans(site_name='janux.ou.edu'):
+        with mock_dataserver.mock_db_trans(site_name='platform.ou.edu'):
             course = find_object_with_ntiid(course_ntiid)
             package_ntiids = [x.ntiid for x in get_course_packages(course)]
         return package_ntiids
