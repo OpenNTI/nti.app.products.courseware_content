@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope import lifecycleevent
 
 from docutils.nodes import Text
 from docutils.nodes import TextElement
@@ -54,9 +55,10 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         context = tex_doc.px_context()
         if context is not None:
             asset = get_dataserver_asset(uri)
-            if IContentBaseFile.providedBy(asset):
-                asset.add_association(context)
-        
+            if      IContentBaseFile.providedBy(asset) \
+                and asset.add_association(context):
+                lifecycleevent.modified(asset)
+
     def save_local(self, rst_node):
         uri = rst_node['uri']
         asset = get_dataserver_asset(uri)
