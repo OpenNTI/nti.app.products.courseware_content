@@ -61,7 +61,7 @@ from nti.contenttypes.courses.utils import get_content_unit_courses
 
 from nti.dataserver.metadata.index import get_metadata_catalog
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import StandardExternalFields
 
