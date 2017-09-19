@@ -28,6 +28,7 @@ from nti.contenttypes.courses.common import get_course_content_packages
 from nti.contenttypes.courses.interfaces import ICourseSectionExporter
 from nti.contenttypes.courses.interfaces import IContentCourseInstance
 
+from nti.contenttypes.courses.exporter import export_proxy
 from nti.contenttypes.courses.exporter import BaseSectionExporter
 
 from nti.contenttypes.courses.utils import get_course_subinstances
@@ -52,7 +53,8 @@ class CourseContentPackagesExporter(BaseSectionExporter):
             package = removeAllProxies(package)
             if not IEditableContentPackage.providedBy(package):
                 continue
-            ext_obj = export_content_package(package, backup, salt, filer)
+            proxy = export_proxy(package, filer, backup, salt)
+            ext_obj = export_content_package(proxy, backup, salt, filer)
             result.append(ext_obj)
         return result
 
