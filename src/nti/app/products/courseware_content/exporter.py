@@ -52,8 +52,7 @@ class CourseContentPackagesExporter(BaseSectionExporter):
             package = removeAllProxies(package)
             if not IEditableContentPackage.providedBy(package):
                 continue
-            proxy = self.proxy(package, filer, backup, salt)
-            ext_obj = export_content_package(proxy, backup, salt, filer)
+            ext_obj = export_content_package(package, backup, salt, filer)
             result.append(ext_obj)
         return result
 
