@@ -1,6 +1,6 @@
-===================================
-nti.app.products.courseware_content
-===================================
+=====================================
+ nti.app.products.courseware_content
+=====================================
 
 .. image:: https://travis-ci.org/NextThought/nti.app.products.courseware_content.svg?branch=master
     :target: https://travis-ci.org/NextThought/nti.app.products.courseware_content
