@@ -40,7 +40,7 @@
 				provides="nti.contentlibrary.interfaces.IContentPackageImporterUpdater"
 				for="nti.contentlibrary.interfaces.IEditableContentPackage" />
 
-	<!-- Directives / Roles -->
+	<!-- reStructuredText -->
 	<include package=".docutils" />
 
 	<subscriber handler=".subscribers._clear_course_packages" />
