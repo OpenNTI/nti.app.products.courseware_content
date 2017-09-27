@@ -34,9 +34,10 @@ def _get_library(context):
     else:
         # If context is given, attempt to use the site the given context
         # is stored in. This is necessary to avoid data loss during sync.
-        folder = IHostPolicyFolder(context)
-        with current_site(folder):
-            library = component.queryUtility(IContentPackageLibrary)
+        folder = IHostPolicyFolder(context, None)
+        if folder is not None:
+            with current_site(folder):
+                library = component.queryUtility(IContentPackageLibrary)
     return library
 
 
