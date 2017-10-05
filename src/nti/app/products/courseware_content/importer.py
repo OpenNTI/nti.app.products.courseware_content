@@ -71,11 +71,14 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
         return remoteUser
 
     def handle_packages(self, items, course, source_filer=None, target_filer=None):
-        result = ContentPackageImporterMixin.handle_packages(self, items, course, 
+        result = ContentPackageImporterMixin.handle_packages(self, items, course,
                                                              source_filer=source_filer,
                                                              target_filer=target_filer)
         added, _ = result
         if added:
+            bundle = course.ContentPackageBundle
+            for package in added:
+                bundle.add(package)
             notify(CourseBundleWillUpdateEvent(course, added_packages=added))
         return added
 
@@ -108,7 +111,7 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
         for subinstance in get_course_subinstances(course):
             result = self.do_import(subinstance, filer, writeout) or result
         return result
-    
+
 
 @component.adapter(IEditableContentPackage)
 @interface.implementer(IContentPackageImporterUpdater)
