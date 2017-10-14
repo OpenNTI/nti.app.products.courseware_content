@@ -38,6 +38,10 @@ from nti.app.products.courseware.tests import PersistentInstructedCourseApplicat
 from nti.app.publishing import VIEW_PUBLISH
 from nti.app.publishing import VIEW_UNPUBLISH
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from nti.contentlibrary import CONTENT_UNIT_MIME_TYPE
 from nti.contentlibrary import CONTENT_PACKAGE_MIME_TYPE
 from nti.contentlibrary import RENDERABLE_CONTENT_UNIT_MIME_TYPE
@@ -64,15 +68,11 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.users import User
 
+from nti.dataserver.tests import mock_dataserver
+
 from nti.externalization.externalization import StandardExternalFields
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-from nti.dataserver.tests import mock_dataserver
 
 CLASS = StandardExternalFields.CLASS
 LINKS = StandardExternalFields.LINKS
