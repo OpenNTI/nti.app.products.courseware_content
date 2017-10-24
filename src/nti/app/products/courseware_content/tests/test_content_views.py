@@ -42,6 +42,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.contentlibrary import DELETED_MARKER
 from nti.contentlibrary import CONTENT_UNIT_MIME_TYPE
 from nti.contentlibrary import CONTENT_PACKAGE_MIME_TYPE
 from nti.contentlibrary import RENDERABLE_CONTENT_UNIT_MIME_TYPE
@@ -524,11 +525,11 @@ class TestContentViews(ApplicationLayerTest):
             assert_that(bundle.ContentPackages, has_length(1))
             assert_that(bundle._ContentPackages_wrefs, has_length(1))
 
-        # Filesystem is empty
-        assert_that(os.path.exists(original_package_path),
-                    is_(False), original_package_path)
-        assert_that(os.path.exists(new_package_path),
-                    is_(False), new_package_path)
+        # Filesystem is empty (marked for deletion).
+        for path in (original_package_path, new_package_path):
+            path = os.path.join(original_package_path, DELETED_MARKER)
+            assert_that(os.path.exists(path),
+                        is_(True), path)
 
         # TODO:
         # -Failed job
