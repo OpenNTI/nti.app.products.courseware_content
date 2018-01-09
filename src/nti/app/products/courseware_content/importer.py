@@ -70,6 +70,7 @@ class CourseContentPackagesImporter(ContentPackageImporterMixin,
             remoteUser = current_principal()
         return remoteUser
 
+    # pylint: disable=arguments-differ
     def handle_packages(self, items, course, source_filer=None, target_filer=None):
         result = ContentPackageImporterMixin.handle_packages(self, items, course,
                                                              source_filer=source_filer,
@@ -129,6 +130,7 @@ class EditableContentPackageImporterUpdater(object):
         if      isinstance(icon, six.string_types) \
             and icon.startswith(NTI_COURSE_FILE_SCHEME) \
             and source_filer is not None and target_filer is not None:
+            # pylint: disable=unused-variable
             href, unused = transfer_resource_from_filer(icon, package,
                                                         source_filer, target_filer)
             package.icon = href

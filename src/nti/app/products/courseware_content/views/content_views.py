@@ -8,12 +8,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+
 from zope.event import notify
 
 from zope.cachedescriptors.property import Lazy
-
-from pyramid.view import view_config
-from pyramid.view import view_defaults
 
 from nti.app.contentlibrary.views import LIBRARY_ADAPTER
 

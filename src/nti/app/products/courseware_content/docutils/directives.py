@@ -8,13 +8,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zope import interface
-
 from docutils import nodes
 
 from docutils.parsers.rst import directives
 
 from docutils.parsers.rst.directives.images import Figure
+
+from zope import interface
 
 from nti.app.contentlibrary_rendering.docutils.utils import is_dataserver_asset
 

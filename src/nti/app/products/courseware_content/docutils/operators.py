@@ -53,11 +53,13 @@ class RenderablePackageContentOperator(OperatorMixin):
 
     def _process(self, line, filer, result):
         modified = False
+        # pylint: disable=no-member
         m = self._figure_pattern.match(line)
         if m is not None:
             reference = m.groups()[0]
             if is_internal_file_link(reference):
                 internal = save_resource_to_filer(reference, filer)
+                # pylint: disable=unused-variable
                 __traceback_info__ = reference, internal
                 if internal:
                     line = re.sub(reference, internal, line)
@@ -87,7 +89,7 @@ class RenderablePackageContentOperator(OperatorMixin):
             modified = self._replace_all(content, filer, result)
             if modified:
                 content = u'\n'.join(result)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             logger.exception("Cannot operate on content")
         return bytes_(content) if is_bytes else content
 
@@ -98,10 +100,12 @@ class RenderableContentPackageImporterUpdater(OperatorMixin):
 
     def _process(self, package, line, result, source_filer, target_filer):
         modified = False
+        # pylint: disable=no-member
         m = self._figure_pattern.match(line)
         if m is not None:
             reference = m.groups()[0]
             if reference.startswith(NTI_COURSE_FILE_SCHEME):
+                # pylint: disable=unused-variable
                 href, unused = transfer_resource_from_filer(reference, package,
                                                             source_filer, target_filer)
                 if href:
@@ -123,7 +127,7 @@ class RenderableContentPackageImporterUpdater(OperatorMixin):
             content = u'\n'.join(result)
             package.contents = bytes_(content)
 
-    def updateFromExternalObject(self, package, unused_external=None, *unused_args, **kwargs):
+    def updateFromExternalObject(self, package, *unused_args, **kwargs):
         source_filer = kwargs.get('source_filer')
         target_filer = kwargs.get('target_filer')
         if source_filer is not None and target_filer is not None:
