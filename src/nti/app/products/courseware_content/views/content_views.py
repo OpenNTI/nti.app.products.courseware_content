@@ -45,9 +45,10 @@ class CourseLibraryPostView(LibraryPostView):
 
     @Lazy
     def course(self):
+        # pylint: disable=no-member
         return self.context.course
 
-    def get_library(self):
+    def get_library(self, unused_context=None):
         """
         Override to install the new content in the course site library.
         """
@@ -59,6 +60,7 @@ class CourseLibraryPostView(LibraryPostView):
         package = super(CourseLibraryPostView, self)._do_call()
         # Now we should have our package in our library, store it on our
         # course and fire events.
+        # pylint: disable=no-member
         bundle = course.ContentPackageBundle
         bundle.updateLastMod()
         # Not sure we can guarantee this is a set...
