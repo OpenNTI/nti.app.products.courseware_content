@@ -8,11 +8,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zope import interface
-from zope import lifecycleevent
-
 from docutils.nodes import Text
 from docutils.nodes import TextElement
+
+from plone.namedfile.utils import getImageInfo
+
+from zope import interface
+from zope import lifecycleevent
 
 from nti.app.contentlibrary_rendering.docutils.utils import process_rst_figure
 from nti.app.contentlibrary_rendering.docutils.utils import save_to_course_assets
@@ -28,8 +30,6 @@ from nti.contentlibrary_rendering.docutils.translators import build_nodes
 from nti.contentlibrary_rendering.docutils.translators import TranslatorMixin
 
 from nti.contentlibrary_rendering.docutils.interfaces import IRSTToPlastexNodeTranslator
-
-from nti.namedfile.utils import getImageInfo
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -81,7 +81,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         return result
 
     def do_legend(self, rst_node, figure, caption, tex_doc):
-        # XXX: in rst, a figure legend can be multiple paragraph
+        # In rst, a figure legend can be multiple paragraph
         # We  will interpret it as a caption
         # http://docutils.sourceforge.net/docs/ref/rst/directives.html#figure
         all_text = []
@@ -97,7 +97,7 @@ class CourseFigureToPlastexNodeTranslator(TranslatorMixin):
         return u' '.join(all_text)
 
     def do_caption(self, rst_node, figure):
-        # XXX: in rst, a figure caption is a single paragraph.
+        # In rst, a figure caption is a single paragraph.
         # We  will interpret it as the caption title
         # http://docutils.sourceforge.net/docs/ref/rst/directives.html#figure
         all_text = []
