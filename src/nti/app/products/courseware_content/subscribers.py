@@ -20,9 +20,11 @@ from nti.contentlibrary.interfaces import IEditableContentPackage
 from nti.contenttypes.courses.common import get_course_packages
 
 from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseSubInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.site.interfaces import IHostPolicyFolder
+from nti.contenttypes.courses.utils import get_parent_course
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -49,6 +51,14 @@ def _clear_course_packages(course, unused_event):
     created).
     """
     count = 0
+    if ICourseSubInstance.providedBy(course):
+        # If we share bundles, we do not want to remove
+        # IEditableContentPackages that belong to the parent course
+        parent_course = get_parent_course(course)
+        child_bundle = getattr(course, 'ContentPackageBundle', '')
+        parent_bundle = getattr(parent_course, 'ContentPackageBundle', '')
+        if child_bundle is parent_bundle:
+            return
     packages = get_course_packages(course)
     for package in packages:
         if IEditableContentPackage.providedBy(package):
