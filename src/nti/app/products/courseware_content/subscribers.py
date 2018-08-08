@@ -23,8 +23,9 @@ from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseSubInstance
 from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
-from nti.site.interfaces import IHostPolicyFolder
 from nti.contenttypes.courses.utils import get_parent_course
+
+from nti.site.interfaces import IHostPolicyFolder
 
 logger = __import__('logging').getLogger(__name__)
 
