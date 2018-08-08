@@ -67,7 +67,7 @@ class _CourseLibraryLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @interface.implementer(IExternalObjectDecorator)
 class _CourseContentPackageBundleDecorator(AbstractAuthenticatedRequestAwareDecorator):
     """
-    Suppress packcages w/o acesss
+    Suppress packages w/o acesss
     """
 
     def _predicate(self, context, unused_result):
