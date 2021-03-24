@@ -19,11 +19,6 @@
 				for="nti.contenttypes.courses.interfaces.ICourseInstance
 					 pyramid.interfaces.IRequest" />
 
-	<subscriber factory=".decorators._CourseContentPackageBundleDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for="nti.contenttypes.courses.interfaces.ICourseContentPackageBundle
-					 pyramid.interfaces.IRequest" />
-
 	<!-- Exporter -->
 	<utility factory=".exporter.CourseContentPackagesExporter"
 			 name="014:ContentPackages" />
