@@ -258,7 +258,10 @@ class TestContentViews(ApplicationLayerTest):
                 course_res = self.testapp.get(course_href,
                                               extra_environ=environ)
                 course_res = course_res.json_body
-            packages = course_res['ContentPackageBundle']['ContentPackages']
+            bundle = course_res['ContentPackageBundle']
+            pkg_rel = self.require_link_href_with_rel(bundle, VIEW_CONTENTS)
+            pkg_res = self.testapp.get(pkg_rel, extra_environ=admin_environ).json_body
+            packages = pkg_res.get('Items')
             return [x['NTIID'] for x in packages]
         # Base case has only has one package
         for environ in (student1_environ, admin_environ, instructor_environ, student3_section_environ):
