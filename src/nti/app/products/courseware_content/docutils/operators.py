@@ -62,7 +62,7 @@ class RenderablePackageContentOperator(OperatorMixin):
                 # pylint: disable=unused-variable
                 __traceback_info__ = reference, internal
                 if internal:
-                    line = re.sub(reference, internal, line)
+                    line = line.replace(reference, internal)
                     modified = True
         result.append(line)
         return modified
@@ -109,7 +109,7 @@ class RenderableContentPackageImporterUpdater(OperatorMixin):
                 href, unused = transfer_resource_from_filer(reference, package,
                                                             source_filer, target_filer)
                 if href:
-                    line = re.sub(reference, href, line)
+                    line = line.replace(reference, href)
                     modified = True
         result.append(line)
         return modified
