@@ -260,7 +260,7 @@ class TestContentViews(ApplicationLayerTest):
                 course_res = course_res.json_body
             bundle = course_res['ContentPackageBundle']
             pkg_rel = self.require_link_href_with_rel(bundle, VIEW_CONTENTS)
-            pkg_res = self.testapp.get(pkg_rel, extra_environ=admin_environ).json_body
+            pkg_res = self.testapp.get(pkg_rel, extra_environ=environ).json_body
             packages = pkg_res.get('Items')
             return [x['NTIID'] for x in packages]
         # Base case has only has one package
@@ -297,9 +297,10 @@ class TestContentViews(ApplicationLayerTest):
         assert_that(content_package_ntiids, contains_inanyorder(self.package_ntiid,
                                                                 new_package_ntiid))
         # Student only sees one package
-        for environ in (student1_environ, instructor_environ):
+        for username, environ in (('student1', student1_environ), 
+                                  ('inst', instructor_environ)):
             content_package_ntiids = _get_package_ntiids(environ=environ)
-            assert_that(content_package_ntiids, has_length(1))
+            assert_that(content_package_ntiids, has_length(1), (new_package_ntiid, username))
             assert_that(content_package_ntiids, contains(self.package_ntiid))
         self._check_package_state(new_package_ntiid)
         # Check page info (404s until rendered, or 403 if unublished).
