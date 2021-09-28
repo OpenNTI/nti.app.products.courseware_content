@@ -10,8 +10,8 @@ entry_points = {
     ],
 }
 
-
 TESTS_REQUIRE = [
+    'nti.app.products.courseware[test]',
     'nti.app.testing',
     'nti.testing',
     'zope.testrunner',
@@ -52,6 +52,7 @@ setup(
     install_requires=[
         'setuptools',
         'docutils',
+        'nti.app.contentlibrary_rendering',
         'nti.app.contentlibrary',
         'nti.app.products.courseware',
         'nti.app.publishing',
